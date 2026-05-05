@@ -340,10 +340,24 @@ app.get("/demo", function (req, res) {
 });
 
 // GET /analysis
-// Show SEO/CRO analysis for the authenticated merchant
-app.get("/analysis", ensureAuthenticated, function (req, res) {
+// Show SEO/CRO analysis for the authenticated merchant.
+// If no cached analysis exists yet, run one synchronously so the page shows real data.
+app.get("/analysis", ensureAuthenticated, async function (req, res) {
   const merchantId = req.user?.merchant?.id;
-  const saved = merchantId ? loadAnalysis(merchantId) : null;
+  let saved = merchantId ? loadAnalysis(merchantId) : null;
+
+  // First-time visit after install — try to generate the analysis now
+  if (merchantId && !saved) {
+    const accessToken = await getAccessTokenForMerchant(merchantId) || SallaAPI.getToken();
+    if (accessToken) {
+      try {
+        saved = await analyzeStore(merchantId, SallaAPI, accessToken);
+      } catch (err) {
+        console.error("[/analysis] Inline analyze failed:", err.message);
+      }
+    }
+  }
+
   res.render("analysis.html", {
     isLogin: req.user,
     analysis: saved?.analysis || null,
@@ -354,22 +368,21 @@ app.get("/analysis", ensureAuthenticated, function (req, res) {
 });
 
 // GET /analysis/refresh
-// Re-run the analysis for the authenticated merchant
+// Re-run the analysis synchronously, then redirect back to /analysis
 app.get("/analysis/refresh", ensureAuthenticated, async function (req, res) {
   const merchantId = req.user?.merchant?.id;
-  const accessToken = req.user?.token || SallaAPI.getToken();
-  if (merchantId && accessToken) {
-    analyzeStore(merchantId, SallaAPI, accessToken).catch(err => {
-      console.error("[SEO Analyzer] Refresh failed:", err.message);
-    });
+  const accessToken = await getAccessTokenForMerchant(merchantId) || SallaAPI.getToken();
+
+  if (!merchantId || !accessToken) {
+    return res.redirect("/analysis");
   }
-  res.render("analysis.html", {
-    isLogin: req.user,
-    analysis: null,
-    analyzedAt: null,
-    productsAnalyzed: 0,
-    pending: true,
-  });
+
+  try {
+    await analyzeStore(merchantId, SallaAPI, accessToken);
+  } catch (err) {
+    console.error("[/analysis/refresh] failed:", err.message);
+  }
+  res.redirect("/analysis");
 });
 
 // GET /logout
