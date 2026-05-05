@@ -4,32 +4,34 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>تحليل المتجر</title>
-  <script src="https://unpkg.com/@salla.sa/embedded-sdk@0.2.4/dist/umd/index.js"></script>
   <script>
-    // Send the iframe.ready signal IMMEDIATELY in the correct Salla format
-    // Required structure: { event, payload, timestamp, source, metadata }
-    (function() {
+    // Polyfill `process.env` — the Salla SDK references it but doesn't include a polyfill in the UMD build
+    window.process = window.process || { env: { NODE_ENV: 'production' } };
+
+    // Helper to send messages in the exact format Salla validates against
+    function sallaPost(event, payload) {
       if (window.parent === window) return;
       try {
         window.parent.postMessage({
-          event: 'embedded::iframe.ready',
-          payload: { height: document.documentElement.scrollHeight || 800 },
+          event: event,
+          payload: payload || {},
           timestamp: Date.now(),
           source: 'embedded-app',
           metadata: { version: '0.2.4' }
         }, '*');
       } catch (e) {}
-    })();
+    }
 
-    // Also use the official SDK once it loads (handles full init handshake)
+    // Fire iframe.ready immediately so the host can dismiss the skeleton
+    sallaPost('embedded::iframe.ready', { height: document.documentElement.scrollHeight || 800 });
+    // Fire ready after DOM is parsed (host may need it to finalize handshake)
+    document.addEventListener('DOMContentLoaded', function() {
+      sallaPost('embedded::iframe.ready', { height: document.documentElement.scrollHeight });
+      sallaPost('embedded::ready', {});
+    });
     window.addEventListener('load', function() {
-      if (window.salla && window.salla.embedded) {
-        window.salla.embedded.init({ debug: false }).then(function() {
-          window.salla.embedded.ready();
-        }).catch(function(err) {
-          console.warn('SDK init failed:', err);
-        });
-      }
+      sallaPost('embedded::iframe.ready', { height: document.documentElement.scrollHeight });
+      sallaPost('embedded::ready', {});
     });
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
