@@ -231,16 +231,22 @@ app.get(
 // render the index page
 
 app.get("/", function (req, res) {
-  // Pre-compute all derived values in JS so the template can't blow up
-  // on edge cases (right after OAuth redirect req.user shape can vary).
-  const u = req.user || null;
-  const userName = u?.name || "تاجر";
-  const userEmail = u?.email || "";
-  const merchant = u?.merchant || {};
-  const userInitial = (userName.charAt(0) || "ت").toUpperCase();
+  console.log("[Home] req.user =", JSON.stringify(req.user || null).slice(0, 500));
 
+  let u = null;
+  try { u = req.user || null; } catch (e) { console.error("[Home] req.user access failed:", e); }
+
+  const userName = (u && u.name) || "تاجر";
+  const userEmail = (u && u.email) || "";
+  const merchant = (u && u.merchant) || {};
+  let userInitial = "ت";
   try {
-    res.render("index.html", {
+    userInitial = String(userName).charAt(0).toUpperCase() || "ت";
+  } catch (e) { console.error("[Home] userInitial failed:", e); }
+
+  res.render(
+    "index.html",
+    {
       user: u,
       isLogin: !!u,
       userDetails: { merchant },
@@ -249,11 +255,22 @@ app.get("/", function (req, res) {
       userInitial,
       merchantName: merchant.name || "",
       merchantAvatar: merchant.avatar || "",
-    });
-  } catch (err) {
-    console.error("[Home] render failed:", err);
-    res.status(500).send(`<h2>Render error</h2><pre>${err.message}</pre><p><a href="/">Reload</a></p>`);
-  }
+    },
+    (err, html) => {
+      if (err) {
+        console.error("[Home] render error:", err.stack || err);
+        return res
+          .status(500)
+          .type("html")
+          .send(
+            `<!doctype html><meta charset=utf-8><title>Render error</title>` +
+            `<h2>Render error</h2><pre>${(err.stack || err.message || err).toString().replace(/</g, "&lt;")}</pre>` +
+            `<p><a href="/">Reload</a></p>`
+          );
+      }
+      res.send(html);
+    }
+  );
 });
 
 // Routes /orders, /customers, /account, /refreshToken were starter-kit demos —
