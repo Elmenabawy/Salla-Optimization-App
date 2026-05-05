@@ -186,7 +186,10 @@ app.use(bodyParser.urlencoded({ extended: false }));
 // parse application/json
 app.use(bodyParser.json());
 
-app.use((req, res, next) => SallaAPI.setExpressVerify(req, res, next));
+// SallaAPI.setExpressVerify writes to req.query, which is a getter-only
+// property in Express 5. We don't actually need it (passport handles the
+// session), so we skip it. If you need to call SallaAPI.fetchResource
+// directly, pass the access token explicitly.
 
 // POST /webhook
 app.post("/webhook", function (req, res) {

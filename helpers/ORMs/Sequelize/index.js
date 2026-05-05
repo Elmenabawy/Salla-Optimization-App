@@ -9,9 +9,12 @@ const User = require("./models/user");
 const dialect = process.env.DATABASE_DIALECT || "sqlite";
 const dataDir = path.join(__dirname, "../../../data");
 
+let _instance = null;
+
 // We export the sequelize connection instance to be used around our app.
 module.exports = {
-  connect: () => {
+  connect: async () => {
+    if (_instance) return _instance;
     if (dialect === "sqlite" && !fs.existsSync(dataDir)) {
       fs.mkdirSync(dataDir, { recursive: true });
     }
@@ -44,14 +47,13 @@ module.exports = {
       modelDefiners[i].associate(sequelize.models);
     }
 
-    // We execute any associates  after the models are defined .
-
-    sequelize
-      .sync()
-      .then((data) => {})
-      .catch((err) => {
-        console.log("Error in creating and connecting database", err);
-      });
+    // Await sync() so the tables exist before we return the connection
+    try {
+      await sequelize.sync();
+    } catch (err) {
+      console.error("Error syncing database:", err);
+    }
+    _instance = sequelize;
     return sequelize;
   },
 };
