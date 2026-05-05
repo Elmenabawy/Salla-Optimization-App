@@ -1,3 +1,4 @@
+const fs = require("fs");
 const path = require("path");
 const { Sequelize, DataTypes } = require("sequelize");
 
@@ -6,14 +7,18 @@ const PasswordResets = require("./models/passwordresets");
 const User = require("./models/user");
 
 const dialect = process.env.DATABASE_DIALECT || "sqlite";
+const dataDir = path.join(__dirname, "../../../data");
 
 // We export the sequelize connection instance to be used around our app.
 module.exports = {
   connect: () => {
+    if (dialect === "sqlite" && !fs.existsSync(dataDir)) {
+      fs.mkdirSync(dataDir, { recursive: true });
+    }
     const sequelize = dialect === "sqlite"
       ? new Sequelize({
           dialect: "sqlite",
-          storage: path.join(__dirname, "../../../data/database.sqlite"),
+          storage: path.join(dataDir, "database.sqlite"),
           logging: false,
         })
       : new Sequelize({

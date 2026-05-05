@@ -1,6 +1,12 @@
 // Import Deps
 require("dotenv").config({ quiet: true });
+const fs = require("fs");
+const path = require("path");
 const express = require("express");
+
+// Ensure persistent data directory exists (SQLite + analysis cache)
+const DATA_DIR = path.join(__dirname, "data");
+if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
 const session = require("express-session");
 const passport = require("passport");
 const consolidate = require("consolidate");
@@ -97,36 +103,37 @@ const SallaAPI = new SallaAPIFactory({
 // set Listener on auth success
 SallaAPI.onAuth(async (accessToken, refreshToken, expires_in, data) => {
   const merchantId = data?.merchant?.id;
+  console.log(`[OAuth] Authentication successful for merchant ${merchantId}`);
 
-  // Save to database
-  SallaDatabase.connect()
-    .then(async (connection) => {
-      let user_id = await SallaDatabase.saveUser({
-        username: data.name,
-        email: data.email,
+  // Save to database — wrap in try/catch so a DB error never breaks the redirect
+  try {
+    const connection = await SallaDatabase.connect();
+    if (connection) {
+      const userId = await SallaDatabase.saveUser({
+        username: data?.name || `merchant-${merchantId}`,
+        email: data?.email || `merchant-${merchantId}@salla.app`,
         email_verified_at: getUnixTimestamp(),
         verified_at: getUnixTimestamp(),
         password: "",
         remember_token: "",
       });
-      await SallaDatabase.saveOauth(
-        {
-          merchant: merchantId,
-          access_token: accessToken,
-          expires_in: expires_in,
-          refresh_token: refreshToken,
-          user_id
-        },
-      );
-    })
-    .catch((err) => {
-      console.log("Error connecting to database: ", err);
-    });
+      await SallaDatabase.saveOauth({
+        merchant: merchantId,
+        access_token: accessToken,
+        expires_in: expires_in,
+        refresh_token: refreshToken,
+        user_id: userId,
+      });
+      console.log(`[OAuth] Tokens saved for merchant ${merchantId}`);
+    }
+  } catch (err) {
+    console.error("[OAuth] DB save failed:", err.message);
+  }
 
   // Trigger SEO/CRO analysis in background (non-blocking)
-  if (merchantId) {
+  if (merchantId && accessToken) {
     analyzeStore(merchantId, SallaAPI, accessToken).catch(err => {
-      console.error("[SEO Analyzer] Analysis failed:", err.message);
+      console.error("[OAuth] Analysis failed:", err.message);
     });
   }
 });
@@ -202,9 +209,21 @@ app.get(["/oauth/redirect", "/login"], passport.authenticate("salla"));
 //   which, in this example, will redirect the user to the home page.
 app.get(
   "/oauth/callback",
-  passport.authenticate("salla", { failureRedirect: "/login" }),
-  function (req, res) {
-    res.redirect("/");
+  function (req, res, next) {
+    passport.authenticate("salla", { failureRedirect: "/login" }, (err, user) => {
+      if (err) {
+        console.error("[OAuth Callback] passport error:", err);
+        return res.status(500).send(`<h2>OAuth error</h2><pre>${err.message || err}</pre><p><a href="/">Go home</a></p>`);
+      }
+      if (!user) return res.redirect("/login");
+      req.logIn(user, (loginErr) => {
+        if (loginErr) {
+          console.error("[OAuth Callback] login error:", loginErr);
+          return res.status(500).send(`<h2>Login error</h2><pre>${loginErr.message}</pre>`);
+        }
+        return res.redirect("/");
+      });
+    })(req, res, next);
   }
 );
 
