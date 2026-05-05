@@ -336,6 +336,25 @@ app.use("/api/widget-config", (req, res, next) => {
 
 app.get("/api/widget-config", (req, res) => {
   const storeId = req.query.store;
+  // Demo preview used by the marketing landing page
+  if (storeId === "demo") {
+    return res.json({
+      whatsapp: {
+        enabled: true,
+        number: "966500000000",
+        message: "مرحبا، شاهدت تطبيق Site Optimization على متجركم وأريد الاستفسار",
+        position: "bottom-right",
+        color: "#25D366",
+      },
+      freeShippingBar: {
+        enabled: true,
+        threshold: 200,
+        currency: "ر.س",
+        text: "🚚 شحن مجاني عند الطلب فوق {threshold} {currency}",
+      },
+      stickyCart: { enabled: false, text: "🛒 أكمل طلبك" },
+    });
+  }
   if (!storeId) return res.json({});
   res.json(loadSettings(storeId));
 });

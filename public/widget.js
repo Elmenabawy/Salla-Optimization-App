@@ -6,16 +6,36 @@
     try { return new URL(self.src).origin; } catch (e) { return ""; }
   })();
 
-  // Get the store/merchant ID from Salla's storefront context
+  // Get the store/merchant ID from multiple possible sources
   function getStoreId() {
+    // 1. From this script's own src — the most reliable when Salla
+    //    expands template vars like ?store={{ store.id }}
     try {
-      if (window.salla && window.salla.config) {
-        return (
-          window.salla.config.get("store.id") ||
-          (window.salla.config.store && window.salla.config.store.id)
-        );
+      if (self && self.src) {
+        var m = self.src.match(/[?&]store=([^&]+)/);
+        if (m && m[1] && m[1] !== "{{" && m[1].indexOf("store.id") === -1) {
+          return decodeURIComponent(m[1]);
+        }
       }
     } catch (e) {}
+    // 2. From Salla's storefront global (lowercase)
+    try {
+      if (window.salla && window.salla.config) {
+        var v = (window.salla.config.get && window.salla.config.get("store.id"))
+          || (window.salla.config.store && window.salla.config.store.id);
+        if (v) return v;
+      }
+    } catch (e) {}
+    // 3. From Salla global (capital)
+    try {
+      if (window.Salla && window.Salla.config) {
+        var v2 = window.Salla.config.get && window.Salla.config.get("store.id");
+        if (v2) return v2;
+      }
+    } catch (e) {}
+    // 4. Meta tag fallback
+    var meta = document.querySelector('meta[name="salla-store-id"]');
+    if (meta && meta.content) return meta.content;
     return null;
   }
 
