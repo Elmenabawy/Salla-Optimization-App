@@ -133,6 +133,7 @@
     <button class="tab-btn" onclick="t(event,'cro')">📈 CRO</button>
     <button class="tab-btn" onclick="t(event,'actions')">✅ خطة العمل</button>
     <button class="tab-btn" onclick="t(event,'ai')">🤖 الاقتراحات</button>
+    <button class="tab-btn" onclick="t(event,'features')">⚙️ ميزات المتجر</button>
   </div>
 
   <!-- SEO -->
@@ -262,8 +263,104 @@
     </div>
   </div>
 
+  <!-- FEATURES (Storefront Widgets) -->
+  <div id="tab-features" class="tab-content space-y-4">
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">💚 زر واتساب عائم</h3>
+          <p class="text-sm text-slate-500">يظهر زر دائري في زاوية المتجر يربط العميل مباشرة بواتساب</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="wa-enabled">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">رقم واتساب (مع رمز الدولة)</label>
+          <input id="wa-number" type="text" placeholder="966501234567" class="input">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">رسالة افتراضية</label>
+          <input id="wa-message" type="text" class="input">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">الموقع</label>
+          <select id="wa-position" class="input">
+            <option value="bottom-right">يمين الأسفل</option>
+            <option value="bottom-left">يسار الأسفل</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">لون الزر</label>
+          <input id="wa-color" type="color" class="input" style="height:38px;padding:2px;">
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">🚚 شريط الشحن المجاني</h3>
+          <p class="text-sm text-slate-500">شريط أعلى المتجر يحفز العميل لزيادة قيمة الطلب</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="ship-enabled">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">الحد الأدنى</label>
+          <input id="ship-threshold" type="number" min="1" class="input">
+        </div>
+        <div>
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">العملة</label>
+          <input id="ship-currency" type="text" class="input">
+        </div>
+        <div class="md:col-span-2">
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">نص الشريط (استخدم {threshold} و {currency})</label>
+          <input id="ship-text" type="text" class="input">
+        </div>
+      </div>
+    </div>
+
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">🛒 زر السلة العائم</h3>
+          <p class="text-sm text-slate-500">زر متابعة الطلب يظهر في وسط الأسفل</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="cart-enabled">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div>
+        <label class="text-xs font-semibold text-slate-600 mb-1 block">نص الزر</label>
+        <input id="cart-text" type="text" class="input">
+      </div>
+    </div>
+
+    <div id="save-status" class="text-sm text-slate-500 text-center"></div>
+    <button id="save-settings" class="grad-bg text-white w-full py-3 rounded-xl font-bold shadow-glow">💾 حفظ الإعدادات</button>
+    <p class="text-xs text-slate-400 text-center">ملاحظة: لتفعيل هذه الميزات على متجرك، يجب إضافة سكربت التطبيق في إعدادات Snippets في Salla Partners (سيتم شرحه)</p>
+  </div>
+
   {% endif %}
 </div>
+
+<style>
+  .input { width:100%; padding:8px 12px; border:1px solid #e2e8f0; border-radius:8px; font-family:inherit; font-size:14px; transition:all .2s; background:#fff; color:#0f172a; }
+  .input:focus { outline:none; border-color:#0d9488; box-shadow:0 0 0 3px rgba(13,148,136,.1); }
+  .switch { position:relative; display:inline-block; width:48px; height:26px; flex-shrink:0; }
+  .switch input { opacity:0; width:0; height:0; }
+  .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#cbd5e0; transition:.3s; border-radius:26px; }
+  .slider:before { position:absolute; content:""; height:20px; width:20px; left:3px; bottom:3px; background:#fff; transition:.3s; border-radius:50%; }
+  .switch input:checked + .slider { background:#0d9488; }
+  .switch input:checked + .slider:before { transform:translateX(22px); }
+</style>
 
 <script>
 function t(e, name) {
@@ -272,6 +369,82 @@ function t(e, name) {
   document.getElementById('tab-' + name).classList.add('active');
   e.currentTarget.classList.add('active');
 }
+
+// === Feature settings panel ===
+(function () {
+  var initialSettings = {{ settings|dump|safe if settings else '{}' }};
+  var token = "{{ iframeToken }}";
+
+  function $(id) { return document.getElementById(id); }
+  function fill(s) {
+    if (!s) return;
+    if (s.whatsapp) {
+      $('wa-enabled').checked = !!s.whatsapp.enabled;
+      $('wa-number').value = s.whatsapp.number || '';
+      $('wa-message').value = s.whatsapp.message || '';
+      $('wa-position').value = s.whatsapp.position || 'bottom-right';
+      $('wa-color').value = s.whatsapp.color || '#25D366';
+    }
+    if (s.freeShippingBar) {
+      $('ship-enabled').checked = !!s.freeShippingBar.enabled;
+      $('ship-threshold').value = s.freeShippingBar.threshold || 200;
+      $('ship-currency').value = s.freeShippingBar.currency || 'SAR';
+      $('ship-text').value = s.freeShippingBar.text || '';
+    }
+    if (s.stickyCart) {
+      $('cart-enabled').checked = !!s.stickyCart.enabled;
+      $('cart-text').value = s.stickyCart.text || '';
+    }
+  }
+  fill(initialSettings);
+
+  var btn = $('save-settings');
+  if (btn) {
+    btn.addEventListener('click', function () {
+      var status = $('save-status');
+      status.textContent = '⏳ جاري الحفظ...';
+      status.style.color = '#64748b';
+      var payload = {
+        whatsapp: {
+          enabled: $('wa-enabled').checked,
+          number: $('wa-number').value.trim(),
+          message: $('wa-message').value.trim(),
+          position: $('wa-position').value,
+          color: $('wa-color').value,
+        },
+        freeShippingBar: {
+          enabled: $('ship-enabled').checked,
+          threshold: parseInt($('ship-threshold').value, 10) || 0,
+          currency: $('ship-currency').value.trim(),
+          text: $('ship-text').value.trim(),
+        },
+        stickyCart: {
+          enabled: $('cart-enabled').checked,
+          text: $('cart-text').value.trim(),
+        },
+      };
+      fetch('/api/settings?token=' + encodeURIComponent(token), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      .then(function (r) { return r.json(); })
+      .then(function (j) {
+        if (j.ok) {
+          status.textContent = '✅ تم الحفظ بنجاح';
+          status.style.color = '#10b981';
+        } else {
+          status.textContent = '❌ ' + (j.error || 'فشل الحفظ');
+          status.style.color = '#ef4444';
+        }
+      })
+      .catch(function () {
+        status.textContent = '❌ خطأ في الاتصال';
+        status.style.color = '#ef4444';
+      });
+    });
+  }
+})();
 
 // Salla SDK handles the iframe handshake - see <head> script
 </script>

@@ -14,6 +14,7 @@ const getUnixTimestamp = require("./helpers/getUnixTimestamp");
 const bodyParser = require("body-parser");
 const { analyzeStore, loadAnalysis } = require("./services/SeoAnalyzer");
 const DemoData = require("./services/DemoData");
+const { loadSettings, saveSettings } = require("./services/MerchantSettings");
 const port = process.argv[2] || 8082;
 
 /*
@@ -322,6 +323,50 @@ async function getAccessTokenForMerchant(merchantId) {
   }
 }
 
+// ============================================================
+// Storefront widget API — public endpoint called by /widget.js
+// running on merchants' Salla stores. Returns the merchant's
+// feature config (WhatsApp button, shipping bar, sticky cart).
+// ============================================================
+app.use("/api/widget-config", (req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Cache-Control", "public, max-age=60"); // 1-minute CDN cache
+  next();
+});
+
+app.get("/api/widget-config", (req, res) => {
+  const storeId = req.query.store;
+  if (!storeId) return res.json({});
+  res.json(loadSettings(storeId));
+});
+
+// ============================================================
+// Settings API — used by the in-iframe settings UI.
+// Auth via the Salla PASETO token Salla passes in the iframe URL.
+// ============================================================
+function authIframeRequest(req, res) {
+  const decoded = decodeSallaToken(req.query.token || req.body.token);
+  const merchantId = decoded?.data?.merchant_id;
+  if (!merchantId) {
+    res.status(401).json({ error: "unauthorized — missing or invalid Salla token" });
+    return null;
+  }
+  return merchantId;
+}
+
+app.get("/api/settings", (req, res) => {
+  const merchantId = authIframeRequest(req, res);
+  if (!merchantId) return;
+  res.json(loadSettings(merchantId));
+});
+
+app.post("/api/settings", (req, res) => {
+  const merchantId = authIframeRequest(req, res);
+  if (!merchantId) return;
+  const saved = saveSettings(merchantId, req.body || {});
+  res.json({ ok: true, settings: saved });
+});
+
 // GET /embed/refresh
 // Force a fresh analysis for the merchant identified in the iframe token,
 // then redirect back to /embed (preserving the original query string).
@@ -373,6 +418,7 @@ app.get("/embed", async function (req, res) {
 
   const data = result || DemoData;
   const refreshQs = new URLSearchParams(req.query).toString();
+  const settings = merchantId ? loadSettings(merchantId) : null;
   res.render("embed.html", {
     analysis: data.analysis,
     analyzedAt: new Date(data.analyzedAt).toLocaleString("ar-SA"),
@@ -381,6 +427,8 @@ app.get("/embed", async function (req, res) {
     installNeeded: installNeeded,
     merchantId: merchantId || null,
     refreshQs: refreshQs,
+    settings: settings,
+    iframeToken: req.query.token || "",
   });
 });
 
