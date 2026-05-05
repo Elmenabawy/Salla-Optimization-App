@@ -230,31 +230,15 @@ app.get(
 // GET /
 // render the index page
 
-app.get("/", async function (req, res) {
-  let userDetails = {
+app.get("/", function (req, res) {
+  // req.user is populated by passport from the OAuth session and already
+  // contains { name, email, merchant: { id, name, avatar, ... } } — no need
+  // to hit the Salla API or DB on every home page load.
+  res.render("index.html", {
     user: req.user || null,
     isLogin: !!req.user,
-    userDetails: { merchant: {} },
-  };
-  if (req.user) {
-    try {
-      await SallaDatabase.connect();
-      const userFromDB = await SallaDatabase.retrieveUser({ email: req.user.email }, true);
-      const accessToken = userFromDB?.oauthId?.access_token || SallaAPI.getToken();
-      if (accessToken) {
-        const userFromAPI = await SallaAPI.getResourceOwner(accessToken);
-        userDetails = { ...userDetails, ...userFromAPI, userDetails: userFromAPI };
-      }
-    } catch (err) {
-      console.error("[Home] failed to load merchant details:", err.message);
-    }
-  }
-  try {
-    res.render("index.html", userDetails);
-  } catch (err) {
-    console.error("[Home] render failed:", err);
-    res.status(500).send(`<h2>Render error</h2><pre>${err.message}</pre>`);
-  }
+    userDetails: req.user || { merchant: {} },
+  });
 });
 
 // Routes /orders, /customers, /account, /refreshToken were starter-kit demos —
