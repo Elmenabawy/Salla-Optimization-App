@@ -232,22 +232,29 @@ app.get(
 
 app.get("/", async function (req, res) {
   let userDetails = {
-    user: req.user,
-    isLogin: req.user
-  }
+    user: req.user || null,
+    isLogin: !!req.user,
+    userDetails: { merchant: {} },
+  };
   if (req.user) {
     try {
+      await SallaDatabase.connect();
       const userFromDB = await SallaDatabase.retrieveUser({ email: req.user.email }, true);
       const accessToken = userFromDB?.oauthId?.access_token || SallaAPI.getToken();
       if (accessToken) {
         const userFromAPI = await SallaAPI.getResourceOwner(accessToken);
-        userDetails = { ...userDetails, ...userFromAPI };
+        userDetails = { ...userDetails, ...userFromAPI, userDetails: userFromAPI };
       }
     } catch (err) {
-      console.error("Error fetching user details:", err.message);
+      console.error("[Home] failed to load merchant details:", err.message);
     }
   }
-  res.render("index.html", userDetails);
+  try {
+    res.render("index.html", userDetails);
+  } catch (err) {
+    console.error("[Home] render failed:", err);
+    res.status(500).send(`<h2>Render error</h2><pre>${err.message}</pre>`);
+  }
 });
 
 // GET /account

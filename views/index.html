@@ -159,16 +159,16 @@
 
   <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-4">
     <div class="flex items-center gap-4">
-      {% if userDetails.merchant.avatar %}
+      {% if userDetails and userDetails.merchant and userDetails.merchant.avatar %}
       <img src="{{ userDetails.merchant.avatar }}" class="w-16 h-16 rounded-2xl object-cover border-2 border-brand-500/50 shadow-glow">
       {% else %}
-      <div class="w-16 h-16 rounded-2xl grad-bg flex items-center justify-center text-2xl font-black text-white shadow-glow">{{ user.name|first }}</div>
+      <div class="w-16 h-16 rounded-2xl grad-bg flex items-center justify-center text-2xl font-black text-white shadow-glow">{{ (user.name or 'U')[0] }}</div>
       {% endif %}
       <div>
-        <h1 class="text-3xl font-black text-white">أهلاً، {{ user.name }} 👋</h1>
+        <h1 class="text-3xl font-black text-white">أهلاً، {{ user.name or 'تاجر' }} 👋</h1>
         <p class="text-slate-400 text-sm mt-1">
-          {% if userDetails.merchant.name %}{{ userDetails.merchant.name }} · {% endif %}
-          <span class="text-brand-400">{{ user.email }}</span>
+          {% if userDetails and userDetails.merchant and userDetails.merchant.name %}{{ userDetails.merchant.name }} · {% endif %}
+          <span class="text-brand-400">{{ user.email or '' }}</span>
         </p>
       </div>
     </div>
