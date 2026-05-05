@@ -4,36 +4,33 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>تحليل المتجر</title>
+  <script src="https://unpkg.com/@salla.sa/embedded-sdk@0.2.4/dist/umd/index.js"></script>
   <script>
-    // CRITICAL: Send ready signal to Salla parent IMMEDIATELY (before page renders)
-    // Salla's iframe wrapper has a timeout; if we don't signal fast enough it shows "couldn't connect"
+    // Send the iframe.ready signal IMMEDIATELY in the correct Salla format
+    // Required structure: { event, payload, timestamp, source, metadata }
     (function() {
       if (window.parent === window) return;
-      var formats = [
-        'ready', 'loaded', 'iframe:ready',
-        { type: 'ready' }, { type: 'loaded' }, { type: 'iframe:ready' }, { type: 'iframe:loaded' },
-        { type: 'app:ready' }, { type: 'app:loaded' },
-        { type: 'salla:ready' }, { type: 'salla:loaded' },
-        { type: 'salla:iframe:ready' }, { type: 'salla:iframe:loaded' },
-        { type: 'salla:embedded-page:ready' }, { type: 'salla:embedded-page:loaded' },
-        { type: 'salla:app:loaded' }, { type: 'salla:app:ready' },
-        { event: 'ready' }, { event: 'loaded' },
-        { name: 'ready' }, { name: 'loaded' },
-        { action: 'ready' }, { action: 'loaded' },
-      ];
-      function ping() {
-        formats.forEach(function(m) {
-          try { window.parent.postMessage(m, '*'); } catch(e) {}
+      try {
+        window.parent.postMessage({
+          event: 'embedded::iframe.ready',
+          payload: { height: document.documentElement.scrollHeight || 800 },
+          timestamp: Date.now(),
+          source: 'embedded-app',
+          metadata: { version: '0.2.4' }
+        }, '*');
+      } catch (e) {}
+    })();
+
+    // Also use the official SDK once it loads (handles full init handshake)
+    window.addEventListener('load', function() {
+      if (window.salla && window.salla.embedded) {
+        window.salla.embedded.init({ debug: false }).then(function() {
+          window.salla.embedded.ready();
+        }).catch(function(err) {
+          console.warn('SDK init failed:', err);
         });
       }
-      ping();
-      setTimeout(ping, 50);
-      setTimeout(ping, 200);
-      setTimeout(ping, 500);
-      setTimeout(ping, 1000);
-      setTimeout(ping, 2000);
-      setTimeout(ping, 4000);
-    })();
+    });
   </script>
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -251,42 +248,7 @@ function t(e, name) {
   e.currentTarget.classList.add('active');
 }
 
-// Tell Salla parent page we're ready (removes the skeleton loader)
-function notifyParent() {
-  if (window.parent && window.parent !== window) {
-    const messages = [
-      'ready', 'loaded', 'iframe:ready', 'salla:ready',
-      { type: 'ready' },
-      { type: 'loaded' },
-      { type: 'iframe:ready' },
-      { type: 'iframe:loaded' },
-      { type: 'app:ready' },
-      { type: 'app:loaded' },
-      { type: 'salla:ready' },
-      { type: 'salla:loaded' },
-      { type: 'salla:iframe:ready' },
-      { type: 'salla:iframe:loaded' },
-      { type: 'salla:embedded-page:ready' },
-      { type: 'salla:embedded-page:loaded' },
-      { event: 'ready' },
-      { event: 'loaded' },
-      { name: 'ready' },
-      { name: 'loaded' },
-      { action: 'ready' },
-      { action: 'loaded' },
-    ];
-    messages.forEach(msg => {
-      try { window.parent.postMessage(msg, '*'); } catch(e) {}
-    });
-  }
-}
-window.addEventListener('load', notifyParent);
-notifyParent();
-// Re-send a few times in case the parent isn't listening yet
-setTimeout(notifyParent, 100);
-setTimeout(notifyParent, 500);
-setTimeout(notifyParent, 1500);
-setTimeout(notifyParent, 3000);
+// Salla SDK handles the iframe handshake - see <head> script
 </script>
 </body>
 </html>
