@@ -219,6 +219,27 @@ function t(e, name) {
   document.getElementById('tab-' + name).classList.add('active');
   e.currentTarget.classList.add('active');
 }
+
+// Tell Salla parent page we're ready (removes the skeleton loader)
+function notifyParent() {
+  if (window.parent && window.parent !== window) {
+    const messages = [
+      { type: 'ready' },
+      { event: 'ready' },
+      { name: 'ready' },
+      'ready',
+      { type: 'salla:ready' },
+      { type: 'app:ready' },
+      { type: 'iframe:ready' },
+      { type: 'loaded' },
+    ];
+    messages.forEach(msg => {
+      try { window.parent.postMessage(msg, '*'); } catch(e) {}
+    });
+  }
+}
+window.addEventListener('load', notifyParent);
+notifyParent();
 </script>
 </body>
 </html>
