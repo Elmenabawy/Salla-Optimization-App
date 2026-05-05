@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>تحليل المتجر</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = { theme: { extend: {
+      fontFamily: { sans: ['Cairo', 'system-ui', 'sans-serif'] },
+      colors: { brand: { 400:'#5eead4', 500:'#2dd4bf', 600:'#0d9488' } },
+      boxShadow: { glow: '0 0 30px -5px rgba(45,212,191,0.4)' }
+    }}}
+  </script>
+  <style>
+    body { font-family: 'Cairo', sans-serif; background: #f8fafc; min-height: 100vh; color: #0f172a; }
+    .card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .grad-bg { background: linear-gradient(135deg,#0d9488 0%,#2563eb 100%); }
+    .grad-text { background: linear-gradient(135deg,#0d9488 0%,#2563eb 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .score-ring { display:inline-flex; align-items:center; justify-content:center; width:80px; height:80px; border-radius:50%; font-size:1.6rem; font-weight:900; border:5px solid; }
+    .score-good { color:#10b981; border-color:#10b981; }
+    .score-mid  { color:#f59e0b; border-color:#f59e0b; }
+    .score-bad  { color:#ef4444; border-color:#ef4444; }
+    .badge { display:inline-flex; align-items:center; gap:4px; padding:3px 10px; border-radius:9999px; font-size:0.7rem; font-weight:800; }
+    .badge-high   { background:#fee2e2; color:#991b1b; }
+    .badge-medium { background:#fef3c7; color:#92400e; }
+    .badge-low    { background:#d1fae5; color:#065f46; }
+    .item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; }
+    .tab-btn { padding: 8px 18px; border-radius: 10px; border: 1px solid #e2e8f0; cursor: pointer; font-size: 0.85rem; font-weight: 700; background: white; color: #64748b; transition: all .2s; font-family: inherit; }
+    .tab-btn.active { background: linear-gradient(135deg,#0d9488 0%,#2563eb 100%); color: white; border-color: transparent; }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; animation: fade .25s ease; }
+    @keyframes fade { from{opacity:0;} to{opacity:1;} }
+  </style>
+</head>
+<body class="antialiased">
+
+<div class="max-w-6xl mx-auto p-6">
+
+  {% if not analysis %}
+  <div class="card p-12 text-center">
+    <div class="text-6xl mb-4">⏳</div>
+    <h2 class="text-2xl font-black mb-2">جارٍ تحضير تحليل متجرك</h2>
+    <p class="text-slate-500 mb-4">سيتم تحليل متجرك تلقائياً ويظهر التقرير هنا</p>
+    <button onclick="location.reload()" class="grad-bg text-white px-6 py-3 rounded-xl font-bold shadow-glow">تحديث الصفحة</button>
+  </div>
+
+  {% else %}
+
+  <!-- Header -->
+  <div class="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
+    <div>
+      <h1 class="text-3xl font-black">📊 تقرير متجرك</h1>
+      <p class="text-sm text-slate-500 mt-1">آخر تحليل: {{ analyzedAt }} · {{ productsAnalyzed }} منتج</p>
+    </div>
+  </div>
+
+  <!-- Scores -->
+  <div class="grid md:grid-cols-2 gap-4 mb-6">
+    <div class="card p-6 flex items-center gap-5">
+      <div class="score-ring {% if analysis.seo_audit.score >= 70 %}score-good{% elif analysis.seo_audit.score >= 40 %}score-mid{% else %}score-bad{% endif %}">{{ analysis.seo_audit.score }}</div>
+      <div>
+        <div class="text-xs text-slate-500">نقاط SEO</div>
+        <div class="text-xl font-black">{% if analysis.seo_audit.score >= 70 %}ممتاز ✨{% elif analysis.seo_audit.score >= 40 %}جيد 👍{% else %}يحتاج تحسين ⚠️{% endif %}</div>
+      </div>
+    </div>
+    <div class="card p-6 flex items-center gap-5">
+      <div class="score-ring {% if analysis.cro_analysis.score >= 70 %}score-good{% elif analysis.cro_analysis.score >= 40 %}score-mid{% else %}score-bad{% endif %}">{{ analysis.cro_analysis.score }}</div>
+      <div>
+        <div class="text-xs text-slate-500">نقاط CRO</div>
+        <div class="text-xl font-black">{% if analysis.cro_analysis.score >= 70 %}ممتاز ✨{% elif analysis.cro_analysis.score >= 40 %}جيد 👍{% else %}يحتاج تحسين ⚠️{% endif %}</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="flex flex-wrap gap-2 mb-5">
+    <button class="tab-btn active" onclick="t(event,'seo')">🔍 SEO</button>
+    <button class="tab-btn" onclick="t(event,'cro')">📈 CRO</button>
+    <button class="tab-btn" onclick="t(event,'actions')">✅ خطة العمل</button>
+    <button class="tab-btn" onclick="t(event,'ai')">🤖 الاقتراحات</button>
+  </div>
+
+  <!-- SEO -->
+  <div id="tab-seo" class="tab-content active space-y-4">
+    <div class="card p-5">
+      <h3 class="font-black mb-3">⚠️ المشكلات التقنية</h3>
+      {% for item in analysis.seo_audit.technical_issues %}
+      <div class="item">
+        <div class="flex items-start gap-2 mb-1.5"><span class="badge badge-{{ item.severity }}">{{ item.severity }}</span><span class="font-bold flex-1">{{ item.issue }}</span></div>
+        <p class="text-sm text-slate-600 mr-2"><b class="text-emerald-600">الحل:</b> {{ item.fix }}</p>
+      </div>
+      {% else %}<p class="text-emerald-600 font-bold text-center py-4">🎉 لا توجد مشكلات</p>{% endfor %}
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black mb-3">📄 On-Page SEO</h3>
+      {% for item in analysis.seo_audit.on_page_problems %}
+      <div class="item">
+        <div class="flex items-start gap-2 mb-1.5"><span class="badge badge-{{ item.severity }}">{{ item.severity }}</span><span class="font-bold flex-1">{{ item.issue }}</span></div>
+        <p class="text-sm text-slate-600 mr-2"><b class="text-emerald-600">الحل:</b> {{ item.fix }}</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black mb-3">🔑 الكلمات المفتاحية</h3>
+      {% for kw in analysis.seo_audit.keyword_opportunities %}
+      <div class="item">
+        <div class="flex items-center gap-2 flex-wrap mb-1"><span class="px-2.5 py-0.5 rounded-md bg-cyan-50 text-cyan-700 font-bold text-sm">{{ kw.keyword_ar }}</span><span class="text-xs text-slate-400">{{ kw.keyword_en }}</span></div>
+        <p class="text-sm text-slate-600">{{ kw.opportunity }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- CRO -->
+  <div id="tab-cro" class="tab-content space-y-4">
+    <div class="card p-5">
+      <h3 class="font-black mb-3">🖥️ تجربة المستخدم</h3>
+      {% for item in analysis.cro_analysis.ux_issues %}
+      <div class="item">
+        <div class="flex items-start gap-2 mb-1.5"><span class="badge badge-{{ item.impact }}">{{ item.impact }}</span><span class="font-bold flex-1">{{ item.issue }}</span></div>
+        <p class="text-sm text-slate-600 mr-2"><b class="text-emerald-600">الحل:</b> {{ item.fix }}</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black mb-3">🛡️ الثقة</h3>
+      {% for item in analysis.cro_analysis.trust_issues %}
+      <div class="item">
+        <div class="flex items-start gap-2 mb-1.5"><span class="badge badge-{{ item.impact }}">{{ item.impact }}</span><span class="font-bold flex-1">{{ item.issue }}</span></div>
+        <p class="text-sm text-slate-600 mr-2"><b class="text-emerald-600">الحل:</b> {{ item.fix }}</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black mb-3">🚪 نقاط التخلي</h3>
+      {% for item in analysis.cro_analysis.funnel_dropoffs %}
+      <div class="item">
+        <h4 class="font-black text-amber-600 mb-1">{{ item.stage }}</h4>
+        <p class="text-sm text-slate-700 mb-1.5">{{ item.issue }}</p>
+        <p class="text-sm text-slate-600"><b class="text-emerald-600">الحل:</b> {{ item.fix }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- Actions -->
+  <div id="tab-actions" class="tab-content space-y-4">
+    <div class="card p-5">
+      <h3 class="font-black mb-3">⚡ مكاسب سريعة</h3>
+      {% for item in analysis.action_plan.quick_wins %}
+      <div class="item">
+        <div class="flex items-start gap-2 mb-1.5"><span class="badge badge-{{ item.impact }}">{{ item.impact }}</span><span class="font-bold flex-1">{{ item.action }}</span></div>
+        <p class="text-sm text-slate-600 mr-2">{{ item.description }}</p>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black mb-3">🗓️ تحسينات طويلة المدى</h3>
+      {% for item in analysis.action_plan.long_term %}
+      <div class="item">
+        <div class="flex items-start gap-2 mb-1.5"><span class="badge badge-{{ item.impact }}">{{ item.impact }}</span><span class="font-bold flex-1">{{ item.action }}</span></div>
+        <p class="text-sm text-slate-600 mr-2">{{ item.description }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  <!-- AI -->
+  <div id="tab-ai" class="tab-content space-y-4">
+    <div class="card p-5">
+      <h3 class="font-black mb-3">🏷️ عناوين محسّنة</h3>
+      {% for item in analysis.ai_suggestions.product_titles %}
+      <div class="item">
+        <div class="text-xs text-rose-500 mb-1">❌ {{ item.original }}</div>
+        <div class="font-bold text-emerald-600 mb-1">🇸🇦 {{ item.improved_ar }}</div>
+        <div class="text-sm text-blue-600 mb-1">🇬🇧 {{ item.improved_en }}</div>
+        <div class="text-xs text-slate-500 italic">💡 {{ item.reason }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black mb-3">📝 وصف الميتا</h3>
+      {% for item in analysis.ai_suggestions.meta_descriptions %}
+      <div class="item">
+        <div class="font-bold text-amber-600 mb-1.5">{{ item.page }}</div>
+        <div class="text-emerald-600 text-sm mb-1">🇸🇦 {{ item.improved_ar }}</div>
+        <div class="text-blue-600 text-sm">🇬🇧 {{ item.improved_en }}</div>
+      </div>
+      {% endfor %}
+    </div>
+
+    <div class="card p-5">
+      <h3 class="font-black mb-3">🖱️ أزرار CTA</h3>
+      {% for item in analysis.ai_suggestions.cta_improvements %}
+      <div class="item">
+        <div class="text-xs text-rose-500 mb-1">❌ {{ item.current }}</div>
+        <div class="font-bold text-emerald-600 mb-1">✨ {{ item.improved_ar }}</div>
+        <div class="text-xs text-slate-500 italic">💡 {{ item.reason }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+
+  {% endif %}
+</div>
+
+<script>
+function t(e, name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  e.currentTarget.classList.add('active');
+}
+</script>
+</body>
+</html>

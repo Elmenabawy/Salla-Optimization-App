@@ -20,9 +20,14 @@ class SallaDatabase {
       userRepository
     }
     if (this.DATABASE_ORM == "Sequelize") {
-      return await this.connection.models.User.findOne({
+      const user = await this.connection.models.User.findOne({
         where: { ...data },
-      })
+        include: includeRelatedData ? [{ model: this.connection.models.OauthTokens }] : [],
+      });
+      if (user && includeRelatedData && user.OauthTokens?.length) {
+        user.oauthId = user.OauthTokens[0];
+      }
+      return user;
     }
     if (this.DATABASE_ORM == "Mongoose") {
     return includeRelatedData ?
@@ -78,22 +83,12 @@ class SallaDatabase {
   }
   async saveOauth({user_id, ...data }) {
     if (this.DATABASE_ORM == "Sequelize") {
-      if (
-        // if not found then create new user exist, create an oath token
-        await this.connection.models.User.findOne({
-          where: { email: data.email },
-        })
-      ) {
-        this.connection.models.OauthTokens.create({
-          user_id: user_id,
-          ...data
-        })
-          .then((data) => {
-            return data
-          })
-          .catch((err) => {
-            console.log("error inserting oath token", err);
-          });
+      if (user_id) {
+        const [token, created] = await this.connection.models.OauthTokens.findOrCreate({
+          where: { user_id },
+          defaults: { user_id, ...data },
+        });
+        if (!created) await token.update({ ...data });
       }
     }
     if (this.DATABASE_ORM == "Mongoose") {

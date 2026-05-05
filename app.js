@@ -6,6 +6,8 @@ const passport = require("passport");
 const consolidate = require("consolidate");
 const getUnixTimestamp = require("./helpers/getUnixTimestamp");
 const bodyParser = require("body-parser");
+const { analyzeStore, loadAnalysis } = require("./services/SeoAnalyzer");
+const DemoData = require("./services/DemoData");
 const port = process.argv[2] || 8082;
 
 /*
@@ -50,6 +52,9 @@ const SallaAPI = new SallaAPIFactory({
 
 // set Listener on auth success
 SallaAPI.onAuth(async (accessToken, refreshToken, expires_in, data) => {
+  const merchantId = data?.merchant?.id;
+
+  // Save to database
   SallaDatabase.connect()
     .then(async (connection) => {
       let user_id = await SallaDatabase.saveUser({
@@ -62,7 +67,7 @@ SallaAPI.onAuth(async (accessToken, refreshToken, expires_in, data) => {
       });
       await SallaDatabase.saveOauth(
         {
-          merchant: data.merchant.id,
+          merchant: merchantId,
           access_token: accessToken,
           expires_in: expires_in,
           refresh_token: refreshToken,
@@ -73,6 +78,13 @@ SallaAPI.onAuth(async (accessToken, refreshToken, expires_in, data) => {
     .catch((err) => {
       console.log("Error connecting to database: ", err);
     });
+
+  // Trigger SEO/CRO analysis in background (non-blocking)
+  if (merchantId) {
+    analyzeStore(merchantId, SallaAPI, accessToken).catch(err => {
+      console.error("[SEO Analyzer] Analysis failed:", err.message);
+    });
+  }
 });
 
 //   Passport session setup.
@@ -161,18 +173,16 @@ app.get("/", async function (req, res) {
     isLogin: req.user
   }
   if (req.user) {
-
-    const userFromDB = await SallaDatabase.retrieveUser({ email: req.user.email }, true);
-    const accessToken = userFromDB.oauthId.access_token;
-
-    const userFromAPI = await SallaAPI.getResourceOwner(accessToken);
-
-    // Merge user details with additional information from the API
-    userDetails = { ...userDetails, ...userFromAPI };
-    // mind you `req.user` content is almost the same as `user`,
-    // the main purpose of calling  `await SallaAPI.getResourceOwner(access_token) `
-    // is to show how to make calls with the access_toke
-
+    try {
+      const userFromDB = await SallaDatabase.retrieveUser({ email: req.user.email }, true);
+      const accessToken = userFromDB?.oauthId?.access_token || SallaAPI.getToken();
+      if (accessToken) {
+        const userFromAPI = await SallaAPI.getResourceOwner(accessToken);
+        userDetails = { ...userDetails, ...userFromAPI };
+      }
+    } catch (err) {
+      console.error("Error fetching user details:", err.message);
+    }
   }
   res.render("index.html", userDetails);
 });
@@ -221,6 +231,79 @@ app.get("/customers", ensureAuthenticated, async function (req, res) {
   });
 });
 
+// Allow Salla to iframe our pages (used by the /embed route)
+app.use((req, res, next) => {
+  if (req.path.startsWith("/embed")) {
+    res.removeHeader("X-Frame-Options");
+    // Allow embedding from any domain (open during dev; tighten for production)
+    res.setHeader("Content-Security-Policy", "frame-ancestors *");
+    // Bypass ngrok's free-tier browser warning page
+    res.setHeader("ngrok-skip-browser-warning", "true");
+  }
+  next();
+});
+
+// GET /embed
+// Iframe-friendly view - loads inside the merchant's Salla dashboard
+// Salla passes ?store_id=xxx in the query, which we use to load that merchant's analysis
+app.get("/embed", function (req, res) {
+  const merchantId = req.query.store_id || req.query.merchant_id;
+  const saved = merchantId ? loadAnalysis(merchantId) : null;
+  // Fall back to demo data if no analysis exists yet (so it's never empty in iframe)
+  const data = saved || DemoData;
+  res.render("embed.html", {
+    analysis: data.analysis,
+    analyzedAt: new Date(data.analyzedAt).toLocaleString("ar-SA"),
+    productsAnalyzed: data.productsAnalyzed,
+  });
+});
+
+// GET /demo
+// Public demo - shows what the analysis looks like with sample data (no login required)
+app.get("/demo", function (req, res) {
+  res.render("analysis.html", {
+    isLogin: req.user,
+    isDemo: true,
+    analysis: DemoData.analysis,
+    analyzedAt: new Date(DemoData.analyzedAt).toLocaleString('ar-SA'),
+    productsAnalyzed: DemoData.productsAnalyzed,
+    pending: false,
+  });
+});
+
+// GET /analysis
+// Show SEO/CRO analysis for the authenticated merchant
+app.get("/analysis", ensureAuthenticated, function (req, res) {
+  const merchantId = req.user?.merchant?.id;
+  const saved = merchantId ? loadAnalysis(merchantId) : null;
+  res.render("analysis.html", {
+    isLogin: req.user,
+    analysis: saved?.analysis || null,
+    analyzedAt: saved?.analyzedAt ? new Date(saved.analyzedAt).toLocaleString('ar-SA') : null,
+    productsAnalyzed: saved?.productsAnalyzed || 0,
+    pending: false,
+  });
+});
+
+// GET /analysis/refresh
+// Re-run the analysis for the authenticated merchant
+app.get("/analysis/refresh", ensureAuthenticated, async function (req, res) {
+  const merchantId = req.user?.merchant?.id;
+  const accessToken = req.user?.token || SallaAPI.getToken();
+  if (merchantId && accessToken) {
+    analyzeStore(merchantId, SallaAPI, accessToken).catch(err => {
+      console.error("[SEO Analyzer] Refresh failed:", err.message);
+    });
+  }
+  res.render("analysis.html", {
+    isLogin: req.user,
+    analysis: null,
+    analyzedAt: null,
+    productsAnalyzed: 0,
+    pending: true,
+  });
+});
+
 // GET /logout
 //   logout from passport
 app.get("/logout", function (req, res) {
@@ -231,8 +314,25 @@ app.get("/logout", function (req, res) {
   });
 });
 
-app.listen(port, () => {
+app.listen(port, async () => {
   console.log(`🚀 Server is running on http://localhost:${port}`);
+
+  // Auto-start tunnel in development when NGROK_AUTHTOKEN is set
+  if (process.env.NGROK_AUTHTOKEN) {
+    try {
+      const ngrok = require("@ngrok/ngrok");
+      const listener = await ngrok.forward({
+        addr: port,
+        authtoken: process.env.NGROK_AUTHTOKEN,
+      });
+      const url = listener.url();
+      console.log(`🌐 Public URL: ${url}`);
+      console.log(`   OAuth Callback: ${url}/oauth/callback`);
+      console.log(`   Webhook URL:    ${url}/webhook`);
+    } catch (err) {
+      console.error("ngrok failed:", err.message);
+    }
+  }
 });
 
 

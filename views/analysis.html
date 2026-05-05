@@ -1,0 +1,269 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<style>
+  .score-ring { display:inline-flex; align-items:center; justify-content:center; width:90px; height:90px; border-radius:50%; font-size:1.8rem; font-weight:900; border:5px solid; position:relative; }
+  .score-good { color:#10b981; border-color:#10b981; box-shadow: 0 0 30px -5px rgba(16,185,129,0.4); }
+  .score-mid  { color:#f59e0b; border-color:#f59e0b; box-shadow: 0 0 30px -5px rgba(245,158,11,0.4); }
+  .score-bad  { color:#ef4444; border-color:#ef4444; box-shadow: 0 0 30px -5px rgba(239,68,68,0.4); }
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:9999px; font-size:0.7rem; font-weight:800; text-transform:uppercase; letter-spacing:0.5px; }
+  .badge-high   { background:rgba(239,68,68,0.15); color:#fca5a5; border:1px solid rgba(239,68,68,0.3); }
+  .badge-medium { background:rgba(245,158,11,0.15); color:#fcd34d; border:1px solid rgba(245,158,11,0.3); }
+  .badge-low    { background:rgba(16,185,129,0.15); color:#6ee7b7; border:1px solid rgba(16,185,129,0.3); }
+  .item { background: rgba(30,41,59,0.5); border: 1px solid rgba(148,163,184,0.1); border-radius: 12px; padding: 16px 20px; margin-bottom: 12px; transition: all .2s; }
+  .item:hover { border-color: rgba(45,212,191,0.3); transform: translateX(-2px); }
+  .tab-btn { padding: 10px 20px; border-radius: 12px; border: none; cursor: pointer; font-size: 0.9rem; font-weight: 700; background: rgba(30,41,59,0.5); color: #94a3b8; transition: all .2s; }
+  .tab-btn.active { background: linear-gradient(135deg,#0d9488 0%,#2563eb 100%); color: white; box-shadow: 0 0 30px -5px rgba(45,212,191,0.4); }
+  .tab-btn:hover:not(.active) { background: rgba(45,212,191,0.1); color: #2dd4bf; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; animation: fadeIn 0.3s ease-out; }
+  @keyframes fadeIn { from{opacity:0;transform:translateY(5px);} to{opacity:1;transform:translateY(0);} }
+</style>
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+{% if isDemo %}
+<div class="mb-6 p-4 rounded-2xl bg-amber-500/10 border border-amber-500/30 flex items-center gap-4">
+  <div class="text-3xl">👁️</div>
+  <div class="flex-1">
+    <div class="font-bold text-amber-300">هذا عرض تجريبي ببيانات نموذجية</div>
+    <div class="text-sm text-amber-300/70">ثبّت التطبيق على متجرك للحصول على تحليل حقيقي مبني على بياناتك</div>
+  </div>
+  <a href="/login" class="grad-bg text-white px-5 py-2 rounded-lg text-sm font-bold shadow-glow whitespace-nowrap">ثبّت الآن</a>
+</div>
+{% endif %}
+
+{% if pending %}
+<div class="glass rounded-3xl p-16 text-center">
+  <div class="text-6xl mb-6 animate-pulse">⏳</div>
+  <h2 class="text-3xl font-black text-white mb-3">جارٍ تحليل متجرك...</h2>
+  <p class="text-slate-400 mb-6">نقوم بفحص منتجاتك ومتجرك - سيظهر التقرير خلال لحظات</p>
+  <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-brand-500/10 border border-brand-500/20">
+    <span class="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span>
+    <span class="text-sm text-brand-400">قم بتحديث الصفحة بعد 30 ثانية</span>
+  </div>
+</div>
+
+{% elif not analysis %}
+<div class="glass rounded-3xl p-16 text-center">
+  <div class="text-6xl mb-6">🔍</div>
+  <h2 class="text-3xl font-black text-white mb-3">لا يوجد تقرير بعد</h2>
+  <p class="text-slate-400">سيتم إنشاء التقرير تلقائياً بعد تثبيت التطبيق</p>
+</div>
+
+{% else %}
+
+<!-- Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+  <div>
+    <h1 class="text-4xl font-black text-white">تقرير متجرك</h1>
+    <p class="text-slate-400 mt-2">آخر تحليل: {{ analyzedAt }} · {{ productsAnalyzed }} منتج</p>
+  </div>
+  {% if not isDemo %}
+  <a href="/analysis/refresh" class="grad-bg text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition shadow-glow inline-flex items-center gap-2">
+    <span>🔄</span>
+    <span>تحديث التحليل</span>
+  </a>
+  {% endif %}
+</div>
+
+<!-- Scores -->
+<div class="grid md:grid-cols-2 gap-6 mb-10">
+  <div class="glass rounded-2xl p-8 flex items-center gap-6">
+    <div class="score-ring {% if analysis.seo_audit.score >= 70 %}score-good{% elif analysis.seo_audit.score >= 40 %}score-mid{% else %}score-bad{% endif %}">
+      {{ analysis.seo_audit.score }}
+    </div>
+    <div>
+      <div class="text-sm text-slate-400 mb-1">نقاط SEO</div>
+      <div class="text-2xl font-black text-white">
+        {% if analysis.seo_audit.score >= 70 %}ممتاز{% elif analysis.seo_audit.score >= 40 %}جيد{% else %}يحتاج تحسين{% endif %}
+      </div>
+      <div class="text-xs text-slate-500 mt-1">من أصل 100 نقطة</div>
+    </div>
+  </div>
+  <div class="glass rounded-2xl p-8 flex items-center gap-6">
+    <div class="score-ring {% if analysis.cro_analysis.score >= 70 %}score-good{% elif analysis.cro_analysis.score >= 40 %}score-mid{% else %}score-bad{% endif %}">
+      {{ analysis.cro_analysis.score }}
+    </div>
+    <div>
+      <div class="text-sm text-slate-400 mb-1">نقاط CRO</div>
+      <div class="text-2xl font-black text-white">
+        {% if analysis.cro_analysis.score >= 70 %}ممتاز{% elif analysis.cro_analysis.score >= 40 %}جيد{% else %}يحتاج تحسين{% endif %}
+      </div>
+      <div class="text-xs text-slate-500 mt-1">من أصل 100 نقطة</div>
+    </div>
+  </div>
+</div>
+
+<!-- Tabs -->
+<div class="flex flex-wrap gap-2 mb-6">
+  <button class="tab-btn active" onclick="showTab(event,'seo')">🔍 تدقيق SEO</button>
+  <button class="tab-btn" onclick="showTab(event,'cro')">📈 تحليل CRO</button>
+  <button class="tab-btn" onclick="showTab(event,'actions')">✅ خطة العمل</button>
+  <button class="tab-btn" onclick="showTab(event,'ai')">🤖 الاقتراحات</button>
+</div>
+
+<!-- SEO -->
+<div id="tab-seo" class="tab-content active space-y-6">
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">⚠️ المشكلات التقنية</h2>
+    {% for item in analysis.seo_audit.technical_issues %}
+    <div class="item">
+      <div class="flex items-start gap-3 mb-2">
+        <span class="badge badge-{{ item.severity }}">{{ item.severity }}</span>
+        <h3 class="font-bold text-white flex-1">{{ item.issue }}</h3>
+      </div>
+      <p class="text-sm text-slate-400 mr-2"><span class="text-brand-400 font-bold">✓ الحل:</span> {{ item.fix }}</p>
+    </div>
+    {% else %}<div class="text-center py-8 text-emerald-400 font-bold">🎉 لا توجد مشكلات تقنية</div>{% endfor %}
+  </div>
+
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">📄 مشكلات On-Page SEO</h2>
+    {% for item in analysis.seo_audit.on_page_problems %}
+    <div class="item">
+      <div class="flex items-start gap-3 mb-2">
+        <span class="badge badge-{{ item.severity }}">{{ item.severity }}</span>
+        <h3 class="font-bold text-white flex-1">{{ item.issue }}</h3>
+      </div>
+      <p class="text-sm text-slate-400 mr-2"><span class="text-brand-400 font-bold">✓ الحل:</span> {{ item.fix }}</p>
+    </div>
+    {% else %}<div class="text-center py-8 text-emerald-400 font-bold">🎉 لا توجد مشكلات</div>{% endfor %}
+  </div>
+
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">🔑 فرص الكلمات المفتاحية</h2>
+    {% for kw in analysis.seo_audit.keyword_opportunities %}
+    <div class="item">
+      <div class="flex items-center gap-3 flex-wrap">
+        <span class="px-3 py-1 rounded-lg bg-brand-500/15 text-brand-400 font-bold text-sm">{{ kw.keyword_ar }}</span>
+        <span class="text-xs text-slate-500">{{ kw.keyword_en }}</span>
+      </div>
+      <p class="text-sm text-slate-400 mt-2">{{ kw.opportunity }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- CRO -->
+<div id="tab-cro" class="tab-content space-y-6">
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">🖥️ مشكلات تجربة المستخدم</h2>
+    {% for item in analysis.cro_analysis.ux_issues %}
+    <div class="item">
+      <div class="flex items-start gap-3 mb-2">
+        <span class="badge badge-{{ item.impact }}">{{ item.impact }}</span>
+        <h3 class="font-bold text-white flex-1">{{ item.issue }}</h3>
+      </div>
+      <p class="text-sm text-slate-400 mr-2"><span class="text-brand-400 font-bold">✓ الحل:</span> {{ item.fix }}</p>
+    </div>
+    {% else %}<div class="text-center py-8 text-emerald-400 font-bold">🎉 لا توجد مشكلات</div>{% endfor %}
+  </div>
+
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">🛡️ مشكلات الثقة</h2>
+    {% for item in analysis.cro_analysis.trust_issues %}
+    <div class="item">
+      <div class="flex items-start gap-3 mb-2">
+        <span class="badge badge-{{ item.impact }}">{{ item.impact }}</span>
+        <h3 class="font-bold text-white flex-1">{{ item.issue }}</h3>
+      </div>
+      <p class="text-sm text-slate-400 mr-2"><span class="text-brand-400 font-bold">✓ الحل:</span> {{ item.fix }}</p>
+    </div>
+    {% else %}<div class="text-center py-8 text-emerald-400 font-bold">🎉 لا توجد مشكلات</div>{% endfor %}
+  </div>
+
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">🚪 نقاط التخلي في القمع</h2>
+    {% for item in analysis.cro_analysis.funnel_dropoffs %}
+    <div class="item">
+      <h3 class="font-bold text-amber-400 mb-2">{{ item.stage }}</h3>
+      <p class="text-sm text-slate-300 mb-2">{{ item.issue }}</p>
+      <p class="text-sm text-slate-400"><span class="text-brand-400 font-bold">✓ الحل:</span> {{ item.fix }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Actions -->
+<div id="tab-actions" class="tab-content space-y-6">
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">⚡ مكاسب سريعة</h2>
+    <p class="text-sm text-slate-400 mb-4">طبّق هذه التحسينات أولاً - تأثير عالي وجهد منخفض</p>
+    {% for item in analysis.action_plan.quick_wins %}
+    <div class="item">
+      <div class="flex items-start gap-3 mb-2">
+        <span class="badge badge-{{ item.impact }}">{{ item.impact }}</span>
+        <h3 class="font-bold text-white flex-1">{{ item.action }}</h3>
+      </div>
+      <p class="text-sm text-slate-400 mr-2">{{ item.description }}</p>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">🗓️ تحسينات طويلة المدى</h2>
+    <p class="text-sm text-slate-400 mb-4">استثمارات استراتيجية لنمو مستدام</p>
+    {% for item in analysis.action_plan.long_term %}
+    <div class="item">
+      <div class="flex items-start gap-3 mb-2">
+        <span class="badge badge-{{ item.impact }}">{{ item.impact }}</span>
+        <h3 class="font-bold text-white flex-1">{{ item.action }}</h3>
+      </div>
+      <p class="text-sm text-slate-400 mr-2">{{ item.description }}</p>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- AI Suggestions -->
+<div id="tab-ai" class="tab-content space-y-6">
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">🏷️ عناوين منتجات محسّنة</h2>
+    {% for item in analysis.ai_suggestions.product_titles %}
+    <div class="item">
+      <div class="text-xs text-rose-400 mb-2">❌ الأصلي: {{ item.original }}</div>
+      <div class="font-bold text-emerald-400 mb-1">🇸🇦 {{ item.improved_ar }}</div>
+      <div class="text-sm text-blue-400 mb-2">🇬🇧 {{ item.improved_en }}</div>
+      <div class="text-xs text-slate-500 italic">💡 {{ item.reason }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">📝 وصف الميتا</h2>
+    {% for item in analysis.ai_suggestions.meta_descriptions %}
+    <div class="item">
+      <div class="font-bold text-amber-400 mb-2">{{ item.page }}</div>
+      <div class="text-emerald-400 text-sm mb-2">🇸🇦 {{ item.improved_ar }}</div>
+      <div class="text-blue-400 text-sm">🇬🇧 {{ item.improved_en }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="glass rounded-2xl p-6">
+    <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-2">🖱️ تحسينات أزرار CTA</h2>
+    {% for item in analysis.ai_suggestions.cta_improvements %}
+    <div class="item">
+      <div class="text-xs text-rose-400 mb-2">❌ الحالي: {{ item.current }}</div>
+      <div class="font-bold text-emerald-400 mb-2">✨ {{ item.improved_ar }}</div>
+      <div class="text-xs text-slate-500 italic">💡 {{ item.reason }}</div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+
+{% endif %}
+
+</section>
+
+<script>
+function showTab(e, name) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-' + name).classList.add('active');
+  e.currentTarget.classList.add('active');
+}
+</script>
+
+{% endblock %}

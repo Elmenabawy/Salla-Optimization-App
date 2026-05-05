@@ -1,16 +1,225 @@
 {% extends 'layout.html' %}
-{% block content %} {% if not isLogin %}
+{% block content %}
+
+{% if not isLogin %}
+<!-- ============= LANDING PAGE ============= -->
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-16 pb-12">
+  <div class="text-center max-w-4xl mx-auto animate-fade-up">
+    <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-brand-500/10 border border-brand-500/20 mb-6">
+      <span class="w-2 h-2 rounded-full bg-brand-400 animate-pulse"></span>
+      <span class="text-sm font-semibold text-brand-400">جديد · تطبيق لمتاجر سلة</span>
+    </div>
+
+    <h1 class="text-5xl md:text-7xl font-black leading-tight mb-6">
+      حلّل متجرك في <span class="grad-text">دقائق</span>
+      <br>واكتشف فرص النمو
+    </h1>
+
+    <p class="text-xl text-slate-400 mb-10 max-w-2xl mx-auto leading-relaxed">
+      تقرير شامل عن SEO، تجربة المستخدم، وفرص التحويل في متجرك على سلة - مع توصيات قابلة للتنفيذ مباشرة
+    </p>
+
+    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+      <a href="/login" class="grad-bg text-white px-8 py-4 rounded-xl font-bold text-lg hover:opacity-90 transition shadow-glow inline-flex items-center justify-center gap-2">
+        <span>ابدأ التحليل المجاني</span>
+        <svg class="w-5 h-5 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+      </a>
+      <a href="/demo" class="glass text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-slate-800/80 transition inline-flex items-center justify-center gap-2">
+        <span>👁️</span>
+        <span>شاهد عرضاً تجريبياً</span>
+      </a>
+    </div>
+
+    <p class="text-sm text-slate-500 mt-6">✓ مجاني تماماً · ✓ بدون بطاقة ائتمان · ✓ التحليل خلال ثوانٍ</p>
+  </div>
+</section>
+
+<!-- Stats -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+    <div class="glass rounded-2xl p-6 text-center">
+      <div class="text-4xl font-black grad-text mb-2">+16</div>
+      <div class="text-sm text-slate-400">فحص تلقائي</div>
+    </div>
+    <div class="glass rounded-2xl p-6 text-center">
+      <div class="text-4xl font-black grad-text mb-2">2</div>
+      <div class="text-sm text-slate-400">دقيقة للتحليل</div>
+    </div>
+    <div class="glass rounded-2xl p-6 text-center">
+      <div class="text-4xl font-black grad-text mb-2">100%</div>
+      <div class="text-sm text-slate-400">باللغة العربية</div>
+    </div>
+    <div class="glass rounded-2xl p-6 text-center">
+      <div class="text-4xl font-black grad-text mb-2">∞</div>
+      <div class="text-sm text-slate-400">تحليلات مجانية</div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
+  <div class="text-center mb-12">
+    <h2 class="text-4xl font-black mb-4">كل ما تحتاجه لتنمية متجرك</h2>
+    <p class="text-slate-400 text-lg">تحليل شامل ومخصص للسوق السعودي والخليجي</p>
+  </div>
+
+  <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+    <div class="glass rounded-2xl p-6 hover:border-brand-500/50 transition group">
+      <div class="w-14 h-14 rounded-xl bg-brand-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+        <span class="text-3xl">🔍</span>
+      </div>
+      <h3 class="text-xl font-bold mb-2 text-white">تدقيق SEO</h3>
+      <p class="text-slate-400 text-sm leading-relaxed">فحص العناوين، الأوصاف، الكلمات المفتاحية، الصور، والروابط - مع توصيات لكل نقطة ضعف</p>
+    </div>
+
+    <div class="glass rounded-2xl p-6 hover:border-brand-500/50 transition group">
+      <div class="w-14 h-14 rounded-xl bg-brand-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+        <span class="text-3xl">📈</span>
+      </div>
+      <h3 class="text-xl font-bold mb-2 text-white">تحليل CRO</h3>
+      <p class="text-slate-400 text-sm leading-relaxed">اكتشف نقاط التخلي في رحلة الشراء، مشكلات الثقة، وعقبات تجربة المستخدم</p>
+    </div>
+
+    <div class="glass rounded-2xl p-6 hover:border-brand-500/50 transition group">
+      <div class="w-14 h-14 rounded-xl bg-brand-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+        <span class="text-3xl">✅</span>
+      </div>
+      <h3 class="text-xl font-bold mb-2 text-white">خطة عمل واضحة</h3>
+      <p class="text-slate-400 text-sm leading-relaxed">مكاسب سريعة (Quick Wins) وتحسينات طويلة المدى مرتبة حسب الأهمية</p>
+    </div>
+
+    <div class="glass rounded-2xl p-6 hover:border-brand-500/50 transition group">
+      <div class="w-14 h-14 rounded-xl bg-brand-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+        <span class="text-3xl">🤖</span>
+      </div>
+      <h3 class="text-xl font-bold mb-2 text-white">اقتراحات جاهزة</h3>
+      <p class="text-slate-400 text-sm leading-relaxed">عناوين منتجات محسّنة، أوصاف ميتا، وأزرار CTA قوية - بالعربي والإنجليزي</p>
+    </div>
+
+    <div class="glass rounded-2xl p-6 hover:border-brand-500/50 transition group">
+      <div class="w-14 h-14 rounded-xl bg-brand-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+        <span class="text-3xl">🎯</span>
+      </div>
+      <h3 class="text-xl font-bold mb-2 text-white">مخصص للسوق السعودي</h3>
+      <p class="text-slate-400 text-sm leading-relaxed">توصيات مبنية على سلوك المتسوق السعودي - من تابي لتمارا للدفع عند الاستلام</p>
+    </div>
+
+    <div class="glass rounded-2xl p-6 hover:border-brand-500/50 transition group">
+      <div class="w-14 h-14 rounded-xl bg-brand-500/10 flex items-center justify-center mb-4 group-hover:scale-110 transition">
+        <span class="text-3xl">⚡</span>
+      </div>
+      <h3 class="text-xl font-bold mb-2 text-white">نتائج فورية</h3>
+      <p class="text-slate-400 text-sm leading-relaxed">التحليل يبدأ تلقائياً عند تثبيت التطبيق - بدون إعدادات أو تعقيدات</p>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
+  <div class="text-center mb-12">
+    <h2 class="text-4xl font-black mb-4">كيف يعمل التطبيق؟</h2>
+    <p class="text-slate-400 text-lg">3 خطوات بسيطة للحصول على تقريرك الكامل</p>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-6">
+    <div class="relative glass rounded-2xl p-8 text-center">
+      <div class="w-16 h-16 rounded-full grad-bg flex items-center justify-center text-white font-black text-2xl mx-auto mb-4 shadow-glow">1</div>
+      <h3 class="text-xl font-bold mb-3 text-white">ثبّت التطبيق</h3>
+      <p class="text-slate-400 text-sm">اضغط على "تثبيت التطبيق" واسمح بالأذونات اللازمة</p>
+    </div>
+    <div class="relative glass rounded-2xl p-8 text-center">
+      <div class="w-16 h-16 rounded-full grad-bg flex items-center justify-center text-white font-black text-2xl mx-auto mb-4 shadow-glow">2</div>
+      <h3 class="text-xl font-bold mb-3 text-white">انتظر التحليل</h3>
+      <p class="text-slate-400 text-sm">يبدأ التحليل تلقائياً ويستغرق أقل من دقيقتين</p>
+    </div>
+    <div class="relative glass rounded-2xl p-8 text-center">
+      <div class="w-16 h-16 rounded-full grad-bg flex items-center justify-center text-white font-black text-2xl mx-auto mb-4 shadow-glow">3</div>
+      <h3 class="text-xl font-bold mb-3 text-white">طبّق التوصيات</h3>
+      <p class="text-slate-400 text-sm">احصل على تقرير شامل مع خطوات واضحة لتحسين متجرك</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 mb-20">
+  <div class="grad-bg rounded-3xl p-12 text-center shadow-glow">
+    <h2 class="text-4xl font-black text-white mb-4">جاهز لتطوير متجرك؟</h2>
+    <p class="text-white/90 text-lg mb-8">ابدأ التحليل الآن واكتشف ما يمكن تحسينه في متجرك</p>
+    <a href="/login" class="inline-flex items-center gap-2 bg-white text-brand-700 px-8 py-4 rounded-xl font-black text-lg hover:bg-slate-100 transition">
+      ثبّت التطبيق مجاناً
+      <svg class="w-5 h-5 rtl:rotate-180" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+    </a>
+  </div>
+</section>
 
 {% else %}
-<h2> Welcome , <span style="font-weight: bold">{{ user.name }}</span>.</h2>
-<p> Email : <span style="font-weight: bold">{{ user.email }}</span></p>
+<!-- ============= MERCHANT DASHBOARD ============= -->
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
 
-{% for key, value in user.merchant %}
-<p>{{ key }}: <span style="font-weight: bold">{{ value }}</span></p>
-{% endfor %}
+  <div class="flex flex-col md:flex-row items-start md:items-center justify-between mb-10 gap-4">
+    <div class="flex items-center gap-4">
+      {% if userDetails.merchant.avatar %}
+      <img src="{{ userDetails.merchant.avatar }}" class="w-16 h-16 rounded-2xl object-cover border-2 border-brand-500/50 shadow-glow">
+      {% else %}
+      <div class="w-16 h-16 rounded-2xl grad-bg flex items-center justify-center text-2xl font-black text-white shadow-glow">{{ user.name|first }}</div>
+      {% endif %}
+      <div>
+        <h1 class="text-3xl font-black text-white">أهلاً، {{ user.name }} 👋</h1>
+        <p class="text-slate-400 text-sm mt-1">
+          {% if userDetails.merchant.name %}{{ userDetails.merchant.name }} · {% endif %}
+          <span class="text-brand-400">{{ user.email }}</span>
+        </p>
+      </div>
+    </div>
+    <a href="/analysis" class="grad-bg text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition shadow-glow inline-flex items-center gap-2">
+      <span>📊</span>
+      <span>عرض التحليل الكامل</span>
+    </a>
+  </div>
 
-<p>
-  <div>Store Avatar:</div>
-  <img src="{{userDetails.merchant.avatar}}" width="100" />
-</p>
-{% endif %} {% endblock %}
+  <div class="grid md:grid-cols-3 gap-6 mb-10">
+    <a href="/analysis" class="glass rounded-2xl p-6 hover:border-brand-500/50 transition group block">
+      <div class="flex items-start justify-between mb-4">
+        <div class="w-12 h-12 rounded-xl bg-brand-500/10 flex items-center justify-center text-2xl">🔍</div>
+        <span class="text-xs text-brand-400 font-bold">تحليل كامل ←</span>
+      </div>
+      <h3 class="text-xl font-bold text-white mb-1">تحليل SEO و CRO</h3>
+      <p class="text-sm text-slate-400">اكتشف فرص تحسين متجرك</p>
+    </a>
+
+    <a href="/orders" class="glass rounded-2xl p-6 hover:border-brand-500/50 transition group block">
+      <div class="flex items-start justify-between mb-4">
+        <div class="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center text-2xl">📦</div>
+        <span class="text-xs text-blue-400 font-bold">عرض ←</span>
+      </div>
+      <h3 class="text-xl font-bold text-white mb-1">الطلبات</h3>
+      <p class="text-sm text-slate-400">تابع طلبات متجرك</p>
+    </a>
+
+    <a href="/customers" class="glass rounded-2xl p-6 hover:border-brand-500/50 transition group block">
+      <div class="flex items-start justify-between mb-4">
+        <div class="w-12 h-12 rounded-xl bg-purple-500/10 flex items-center justify-center text-2xl">👥</div>
+        <span class="text-xs text-purple-400 font-bold">عرض ←</span>
+      </div>
+      <h3 class="text-xl font-bold text-white mb-1">العملاء</h3>
+      <p class="text-sm text-slate-400">اطلع على قائمة عملائك</p>
+    </a>
+  </div>
+
+  <div class="glass rounded-2xl p-8">
+    <div class="flex items-start gap-4">
+      <div class="w-12 h-12 rounded-xl bg-amber-500/10 flex items-center justify-center text-2xl flex-shrink-0">💡</div>
+      <div class="flex-1">
+        <h3 class="text-xl font-bold text-white mb-2">تلميح اليوم</h3>
+        <p class="text-slate-400 leading-relaxed">
+          لتحسين معدل التحويل في متجرك السعودي: فعّل خيارات الدفع المقسط (تابي وتمارا) - تزيد متوسط قيمة الطلب بنسبة 40%+، وأضف زر واتساب للتواصل المباشر - 60% من العملاء يفضلون التواصل قبل الشراء.
+        </p>
+      </div>
+    </div>
+  </div>
+
+</section>
+{% endif %}
+
+{% endblock %}
