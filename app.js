@@ -231,14 +231,29 @@ app.get(
 // render the index page
 
 app.get("/", function (req, res) {
-  // req.user is populated by passport from the OAuth session and already
-  // contains { name, email, merchant: { id, name, avatar, ... } } — no need
-  // to hit the Salla API or DB on every home page load.
-  res.render("index.html", {
-    user: req.user || null,
-    isLogin: !!req.user,
-    userDetails: req.user || { merchant: {} },
-  });
+  // Pre-compute all derived values in JS so the template can't blow up
+  // on edge cases (right after OAuth redirect req.user shape can vary).
+  const u = req.user || null;
+  const userName = u?.name || "تاجر";
+  const userEmail = u?.email || "";
+  const merchant = u?.merchant || {};
+  const userInitial = (userName.charAt(0) || "ت").toUpperCase();
+
+  try {
+    res.render("index.html", {
+      user: u,
+      isLogin: !!u,
+      userDetails: { merchant },
+      userName,
+      userEmail,
+      userInitial,
+      merchantName: merchant.name || "",
+      merchantAvatar: merchant.avatar || "",
+    });
+  } catch (err) {
+    console.error("[Home] render failed:", err);
+    res.status(500).send(`<h2>Render error</h2><pre>${err.message}</pre><p><a href="/">Reload</a></p>`);
+  }
 });
 
 // Routes /orders, /customers, /account, /refreshToken were starter-kit demos —
