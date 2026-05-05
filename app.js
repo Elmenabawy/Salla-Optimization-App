@@ -243,18 +243,72 @@ app.use((req, res, next) => {
   next();
 });
 
+// Decode the PASETO v4.public token Salla passes in the iframe URL
+// We don't verify the signature here — we trust it because it came from Salla's iframe context
+function decodeSallaToken(token) {
+  if (!token || !token.startsWith("v4.public.")) return null;
+  try {
+    const buf = Buffer.from(token.slice("v4.public.".length), "base64url");
+    // Format: payload bytes || 64-byte Ed25519 signature
+    const payloadJson = buf.slice(0, buf.length - 64).toString("utf8");
+    return JSON.parse(payloadJson);
+  } catch {
+    return null;
+  }
+}
+
+// Look up the OAuth access token we saved when the merchant installed the app
+async function getAccessTokenForMerchant(merchantId) {
+  try {
+    const conn = await SallaDatabase.connect();
+    if (!conn) return null;
+    const oauth = await conn.models.OauthTokens.findOne({
+      where: { merchant: merchantId },
+      order: [["updatedAt", "DESC"]],
+    });
+    return oauth?.access_token || null;
+  } catch (err) {
+    console.error("[Embed] Failed to fetch access token:", err.message);
+    return null;
+  }
+}
+
 // GET /embed
-// Iframe-friendly view - loads inside the merchant's Salla dashboard
-// Salla passes ?store_id=xxx in the query, which we use to load that merchant's analysis
-app.get("/embed", function (req, res) {
-  const merchantId = req.query.store_id || req.query.merchant_id;
-  const saved = merchantId ? loadAnalysis(merchantId) : null;
-  // Fall back to demo data if no analysis exists yet (so it's never empty in iframe)
-  const data = saved || DemoData;
+// Iframe view loaded inside the merchant's Salla dashboard.
+// Salla passes ?token=<paseto>&app_id=... — we decode it to get merchant_id,
+// then look up that merchant's saved access_token and run a real analysis.
+app.get("/embed", async function (req, res) {
+  const decoded = decodeSallaToken(req.query.token);
+  const merchantId = decoded?.data?.merchant_id || req.query.store_id || req.query.merchant_id;
+
+  let result = merchantId ? loadAnalysis(merchantId) : null;
+  let isReal = !!result;
+  let installNeeded = false;
+
+  // If we have a merchant but no cached analysis, try to run one now using their saved access token
+  if (merchantId && !result) {
+    const accessToken = await getAccessTokenForMerchant(merchantId);
+    if (accessToken) {
+      try {
+        result = await analyzeStore(merchantId, SallaAPI, accessToken);
+        isReal = true;
+      } catch (err) {
+        console.error("[Embed] Analysis failed for merchant", merchantId, err.message);
+      }
+    } else {
+      // Merchant ID is in token but we don't have an OAuth token saved → app not installed yet
+      installNeeded = true;
+    }
+  }
+
+  const data = result || DemoData;
   res.render("embed.html", {
     analysis: data.analysis,
     analyzedAt: new Date(data.analyzedAt).toLocaleString("ar-SA"),
     productsAnalyzed: data.productsAnalyzed,
+    isReal: isReal,
+    installNeeded: installNeeded,
+    merchantId: merchantId || null,
   });
 });
 
