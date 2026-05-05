@@ -32,15 +32,59 @@ const SallaWebhook = require("@salla.sa/webhooks-actions");
 
 SallaWebhook.setSecret(SALLA_WEBHOOK_SECRET);
 
-// Add Listeners
-SallaWebhook.on("app.installed", (eventBody, userArgs) => {
-  // handel app.installed event
+// Save the access token + trigger SEO/CRO analysis for a merchant
+async function persistMerchantAndAnalyze(merchantId, data) {
+  const accessToken = data?.access_token;
+  const refreshToken = data?.refresh_token;
+  const expiresIn = data?.expires || data?.expires_in;
+  if (!accessToken || !merchantId) return;
+
+  try {
+    const conn = await SallaDatabase.connect();
+    if (conn) {
+      const userId = await SallaDatabase.saveUser({
+        username: data.merchant?.name || `merchant-${merchantId}`,
+        email: data.merchant?.email || `merchant-${merchantId}@salla.app`,
+        email_verified_at: getUnixTimestamp(),
+        verified_at: getUnixTimestamp(),
+        password: "",
+        remember_token: "",
+      });
+      await SallaDatabase.saveOauth({
+        merchant: merchantId,
+        access_token: accessToken,
+        refresh_token: refreshToken,
+        expires_in: expiresIn,
+        user_id: userId,
+      });
+      console.log(`[Webhook] Saved tokens for merchant ${merchantId}`);
+    }
+  } catch (err) {
+    console.error("[Webhook] Failed to save tokens:", err.message);
+  }
+
+  // Kick off the analysis in the background
+  analyzeStore(merchantId, SallaAPI, accessToken).catch(err => {
+    console.error("[Webhook] Analysis failed:", err.message);
+  });
+}
+
+// app.store.authorize fires after a merchant authorizes the app (Easy Mode delivers the token here)
+SallaWebhook.on("app.store.authorize", async (eventBody) => {
+  console.log("[Webhook] app.store.authorize received");
+  const merchantId = eventBody?.merchant || eventBody?.data?.merchant?.id;
+  await persistMerchantAndAnalyze(merchantId, eventBody?.data || {});
 });
-SallaWebhook.on("app.store.authorize", (eventBody, userArgs) => {
-  // handel app.installed event
+
+// app.installed fires once when the merchant first installs the app
+SallaWebhook.on("app.installed", async (eventBody) => {
+  console.log("[Webhook] app.installed received");
+  const merchantId = eventBody?.merchant || eventBody?.data?.merchant?.id;
+  await persistMerchantAndAnalyze(merchantId, eventBody?.data || {});
 });
-SallaWebhook.on("all", (eventBody, userArgs) => {
-  // handel all events even thats not authorized
+
+SallaWebhook.on("all", (eventBody) => {
+  console.log("[Webhook] event:", eventBody?.event);
 });
 
 // we initialize our Salla API
