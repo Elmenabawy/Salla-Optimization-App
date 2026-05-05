@@ -287,6 +287,27 @@ async function getAccessTokenForMerchant(merchantId) {
   }
 }
 
+// GET /embed/refresh
+// Force a fresh analysis for the merchant identified in the iframe token,
+// then redirect back to /embed (preserving the original query string).
+app.get("/embed/refresh", async function (req, res) {
+  const decoded = decodeSallaToken(req.query.token);
+  const merchantId = decoded?.data?.merchant_id;
+  if (merchantId) {
+    const accessToken = await getAccessTokenForMerchant(merchantId);
+    if (accessToken) {
+      try {
+        await analyzeStore(merchantId, SallaAPI, accessToken);
+      } catch (err) {
+        console.error("[/embed/refresh] failed:", err.message);
+      }
+    }
+  }
+  // Preserve original query so the iframe context (token, app_id, etc.) survives
+  const qs = new URLSearchParams(req.query).toString();
+  res.redirect("/embed" + (qs ? "?" + qs : ""));
+});
+
 // GET /embed
 // Iframe view loaded inside the merchant's Salla dashboard.
 // Salla passes ?token=<paseto>&app_id=... — we decode it to get merchant_id,
@@ -316,6 +337,7 @@ app.get("/embed", async function (req, res) {
   }
 
   const data = result || DemoData;
+  const refreshQs = new URLSearchParams(req.query).toString();
   res.render("embed.html", {
     analysis: data.analysis,
     analyzedAt: new Date(data.analyzedAt).toLocaleString("ar-SA"),
@@ -323,6 +345,7 @@ app.get("/embed", async function (req, res) {
     isReal: isReal,
     installNeeded: installNeeded,
     merchantId: merchantId || null,
+    refreshQs: refreshQs,
   });
 });
 

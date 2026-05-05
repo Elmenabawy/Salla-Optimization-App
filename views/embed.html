@@ -101,6 +101,12 @@
       <h1 class="text-3xl font-black">📊 تقرير متجرك</h1>
       <p class="text-sm text-slate-500 mt-1">آخر تحليل: {{ analyzedAt }} · {{ productsAnalyzed }} منتج</p>
     </div>
+    {% if isReal %}
+    <a href="/embed/refresh?{{ refreshQs|safe }}" class="grad-bg text-white px-5 py-2.5 rounded-xl font-bold shadow-glow inline-flex items-center gap-2 text-sm whitespace-nowrap">
+      <span>🔄</span>
+      <span>تحديث التحليل</span>
+    </a>
+    {% endif %}
   </div>
 
   <!-- Scores -->
