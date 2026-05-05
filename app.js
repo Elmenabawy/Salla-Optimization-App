@@ -257,49 +257,9 @@ app.get("/", async function (req, res) {
   }
 });
 
-// GET /account
-// get account information and ensure user is authenticated
-
-app.get("/account", ensureAuthenticated, function (req, res) {
-  res.render("account.html", {
-    user: req.user,
-    isLogin: req.user,
-  });
-});
-
-// GET /refreshToken
-// get new access token
-
-app.get("/refreshToken", ensureAuthenticated, function (req, res) {
-  SallaAPI.requestNewAccessToken(SallaAPI.getRefreshToken())
-    .then((token) => {
-      res.render("token.html", {
-        token,
-        isLogin: req.user,
-      });
-    })
-    .catch((err) => res.send(err));
-});
-
-// GET /orders
-// get all orders from user store
-
-app.get("/orders", ensureAuthenticated, async function (req, res) {
-  res.render("orders.html", {
-    orders: await SallaAPI.getAllOrders(),
-    isLogin: req.user,
-  });
-});
-
-// GET /customers
-// get all customers from user store
-
-app.get("/customers", ensureAuthenticated, async function (req, res) {
-  res.render("customers.html", {
-    customers: await SallaAPI.getAllCustomers(),
-    isLogin: req.user,
-  });
-});
+// Routes /orders, /customers, /account, /refreshToken were starter-kit demos —
+// removed because they're not part of the SEO/CRO app and their views/data flow
+// were broken after the OAuth changes.
 
 // Allow Salla to iframe our pages (used by the /embed route)
 app.use((req, res, next) => {
