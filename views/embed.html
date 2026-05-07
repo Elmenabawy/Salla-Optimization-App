@@ -358,6 +358,18 @@
           <label class="text-xs font-semibold text-slate-600 mb-1 block">نص الزر</label>
           <input id="cart-text" type="text" class="input">
         </div>
+        <div class="md:col-span-3">
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">الموقع على الشاشة</label>
+          <select id="cart-position" class="input">
+            <option value="bottom-center">منتصف الأسفل</option>
+            <option value="bottom-right">يمين الأسفل</option>
+            <option value="bottom-left">يسار الأسفل</option>
+            <option value="top-center">منتصف الأعلى</option>
+            <option value="top-right">يمين الأعلى</option>
+            <option value="top-left">يسار الأعلى</option>
+          </select>
+          <p class="text-xs text-slate-400 mt-1">💡 يمكن للعميل سحب الزر بإصبعه على المتجر وإسقاطه في أي حافة</p>
+        </div>
         <div>
           <label class="text-xs font-semibold text-slate-600 mb-1 block">لون الخلفية</label>
           <input id="cart-bg" type="color" class="input" style="height:38px;padding:2px;">
@@ -432,6 +444,7 @@ function t(e, name) {
     if (s.stickyCart) {
       $('cart-enabled').checked = !!s.stickyCart.enabled;
       $('cart-text').value = s.stickyCart.text || '';
+      $('cart-position').value = s.stickyCart.position || 'bottom-center';
       $('cart-bg').value = s.stickyCart.bgColor || '#0d9488';
       $('cart-text-color').value = s.stickyCart.textColor || '#FFFFFF';
     }
@@ -465,6 +478,7 @@ function t(e, name) {
         stickyCart: {
           enabled: $('cart-enabled').checked,
           text: $('cart-text').value.trim(),
+          position: $('cart-position').value,
           bgColor: $('cart-bg').value,
           textColor: $('cart-text-color').value,
         },

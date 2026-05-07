@@ -17,6 +17,9 @@ const DEFAULTS = {
     text: "🛒 أكمل طلبك الآن",
     bgColor: "#0d9488",
     textColor: "#FFFFFF",
+    position: "bottom-center", // bottom-right | bottom-left | bottom-center | top-right | top-left | top-center
+    offsetX: 20,
+    offsetY: 20,
   },
   freeShippingBar: {
     enabled: false,
