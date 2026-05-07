@@ -10,16 +10,22 @@ const DEFAULTS = {
     message: "السلام عليكم، أريد الاستفسار عن المنتجات",
     position: "bottom-right",
     color: "#25D366",
+    iconColor: "#FFFFFF",
   },
   stickyCart: {
     enabled: false,
     text: "🛒 أكمل طلبك الآن",
+    bgColor: "#0d9488",
+    textColor: "#FFFFFF",
   },
   freeShippingBar: {
     enabled: false,
     threshold: 200,
     currency: "SAR",
     text: "🚚 احصل على شحن مجاني عند طلب فوق {threshold} {currency}",
+    bgColor: "#0d9488",
+    bgColor2: "#2563eb",
+    textColor: "#FFFFFF",
   },
 };
 
