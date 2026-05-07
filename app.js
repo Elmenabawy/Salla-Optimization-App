@@ -483,13 +483,31 @@ app.get("/analysis", ensureAuthenticated, async function (req, res) {
     }
   }
 
+  const settings = merchantId ? loadSettings(merchantId) : null;
+
   res.render("analysis.html", {
     isLogin: req.user,
     analysis: saved?.analysis || null,
     analyzedAt: saved?.analyzedAt ? new Date(saved.analyzedAt).toLocaleString('ar-SA') : null,
     productsAnalyzed: saved?.productsAnalyzed || 0,
     pending: false,
+    settings: settings,
+    merchantId: merchantId || null,
   });
+});
+
+// API for the main-site analysis page (uses session auth, not iframe token)
+app.get("/api/my-settings", ensureAuthenticated, function (req, res) {
+  const merchantId = req.user?.merchant?.id;
+  if (!merchantId) return res.status(401).json({ error: "no merchant" });
+  res.json(loadSettings(merchantId));
+});
+
+app.post("/api/my-settings", ensureAuthenticated, function (req, res) {
+  const merchantId = req.user?.merchant?.id;
+  if (!merchantId) return res.status(401).json({ error: "no merchant" });
+  const saved = saveSettings(merchantId, req.body || {});
+  res.json({ ok: true, settings: saved });
 });
 
 // GET /analysis/refresh
