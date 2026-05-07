@@ -360,6 +360,35 @@ app.get("/api/widget-config", (req, res) => {
 });
 
 // ============================================================
+// Merchant data APIs — return real products/categories from
+// the merchant's Salla store (used to populate targeting dropdowns).
+// Auth via the Salla PASETO token Salla passes in the iframe URL.
+// ============================================================
+
+async function getMerchantData(req, res, sallaUrl) {
+  const decoded = decodeSallaToken(req.query.token);
+  const merchantId = decoded?.data?.merchant_id;
+  if (!merchantId) return res.status(401).json({ error: "unauthorized" });
+  const accessToken = await getAccessTokenForMerchant(merchantId);
+  if (!accessToken) return res.json({ data: [] });
+  try {
+    const data = await SallaAPI.fetchResource({ url: sallaUrl, token: accessToken });
+    res.json(data || { data: [] });
+  } catch (err) {
+    console.error("[API] getMerchantData failed:", err.message);
+    res.json({ data: [] });
+  }
+}
+
+app.get("/api/merchant-products", (req, res) =>
+  getMerchantData(req, res, "https://api.salla.dev/admin/v2/products?per_page=100")
+);
+
+app.get("/api/merchant-categories", (req, res) =>
+  getMerchantData(req, res, "https://api.salla.dev/admin/v2/categories?per_page=100")
+);
+
+// ============================================================
 // Settings API — used by the in-iframe settings UI.
 // Auth via the Salla PASETO token Salla passes in the iframe URL.
 // ============================================================

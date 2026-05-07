@@ -567,16 +567,34 @@
         <div><label class="text-xs font-semibold text-slate-600 mb-1 block">قيمة المؤقت (ثوانٍ أو %)</label><input id="cp-trigger-value" type="number" min="1" class="input"></div>
         <div class="md:col-span-2 border-t pt-3 mt-2 border-slate-200">
           <label class="text-xs font-semibold text-slate-600 mb-1 block">📍 استهداف الصفحات</label>
-          <select id="cp-targeting" class="input">
+          <select id="cp-targeting" class="input" onchange="onTargetingChange(this.value)">
             <option value="all">جميع صفحات المتجر</option>
             <option value="product">جميع صفحات المنتجات</option>
-            <option value="specific-product">منتج محدد (أدخل ID المنتج)</option>
-            <option value="category">صفحات تصنيف محدد</option>
+            <option value="specific-product">منتج محدد</option>
+            <option value="category">تصنيف محدد</option>
           </select>
-          <p class="text-xs text-slate-400 mt-1">إذا اخترت منتج محدد أو تصنيف، أدخل المعرّفات في الحقل أدناه (افصل بفواصل)</p>
         </div>
-        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">معرّفات المنتجات/التصنيفات (مفصولة بفواصل)</label>
-          <input id="cp-target-ids" type="text" class="input" placeholder="مثال: 12345, 67890"></div>
+
+        <!-- Dynamic product selector (hidden unless specific-product is chosen) -->
+        <div class="md:col-span-2" id="cp-product-wrap" style="display:none">
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">اختر المنتجات</label>
+          <div id="cp-product-loading" class="text-xs text-slate-400">⏳ جاري تحميل منتجاتك...</div>
+          <select id="cp-product-select" class="input" multiple size="6" style="display:none;height:auto;min-height:120px">
+          </select>
+          <p class="text-xs text-slate-400 mt-1">اضغط Ctrl (أو Command) للاختيار المتعدد</p>
+        </div>
+
+        <!-- Dynamic category selector (hidden unless category is chosen) -->
+        <div class="md:col-span-2" id="cp-category-wrap" style="display:none">
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">اختر التصنيفات</label>
+          <div id="cp-category-loading" class="text-xs text-slate-400">⏳ جاري تحميل التصنيفات...</div>
+          <select id="cp-category-select" class="input" multiple size="6" style="display:none;height:auto;min-height:120px">
+          </select>
+          <p class="text-xs text-slate-400 mt-1">اضغط Ctrl (أو Command) للاختيار المتعدد</p>
+        </div>
+
+        <!-- Hidden field storing the final comma-separated IDs -->
+        <input id="cp-target-ids" type="hidden" value="">
         <div><label class="text-xs font-semibold text-slate-600 mb-1 block">تكرار الظهور</label>
           <select id="cp-once" class="input">
             <option value="session">مرة في كل جلسة</option>
@@ -721,7 +739,91 @@ function t(e, name) {
       $('cp-bg').value = s.customPopup.bgColor || '#FFFFFF';
       $('cp-text-color').value = s.customPopup.textColor || '#0f172a';
       $('cp-accent').value = s.customPopup.accentColor || '#0d9488';
+      onTargetingChange(s.customPopup.targeting || 'all', s.customPopup.targetIds || '');
     }
+  }
+
+  // Cache for products/categories so we don't refetch on every targeting change
+  var _productsCache = null;
+  var _categoriesCache = null;
+
+  function onTargetingChange(val, preselected) {
+    $('cp-product-wrap').style.display = val === 'specific-product' ? '' : 'none';
+    $('cp-category-wrap').style.display = val === 'category' ? '' : 'none';
+    if (val === 'specific-product') loadProductSelect(preselected);
+    if (val === 'category') loadCategorySelect(preselected);
+  }
+  window.onTargetingChange = onTargetingChange;
+
+  // Multi-select → sync hidden ids field
+  function syncSelectToIds(selectEl, hiddenEl) {
+    var selected = Array.from(selectEl.selectedOptions).map(function (o) { return o.value; });
+    $(hiddenEl).value = selected.join(',');
+  }
+  function markPreselected(selectEl, preselected) {
+    var ids = (preselected || '').split(',').map(function (s) { return s.trim(); });
+    Array.from(selectEl.options).forEach(function (opt) {
+      opt.selected = ids.indexOf(opt.value) !== -1;
+    });
+  }
+
+  function loadProductSelect(preselected) {
+    if (_productsCache) {
+      renderOptions('cp-product-select', 'cp-product-loading', _productsCache, preselected);
+      return;
+    }
+    fetch('/api/merchant-products?token=' + encodeURIComponent(token))
+      .then(function (r) { return r.json(); })
+      .then(function (json) {
+        var list = (json.data || json || []).map(function (p) {
+          return { id: String(p.id), name: p.name || p.title || 'منتج #' + p.id };
+        });
+        _productsCache = list;
+        renderOptions('cp-product-select', 'cp-product-loading', list, preselected);
+      })
+      .catch(function () {
+        $('cp-product-loading').textContent = '❌ تعذّر تحميل المنتجات';
+      });
+  }
+
+  function loadCategorySelect(preselected) {
+    if (_categoriesCache) {
+      renderOptions('cp-category-select', 'cp-category-loading', _categoriesCache, preselected);
+      return;
+    }
+    fetch('/api/merchant-categories?token=' + encodeURIComponent(token))
+      .then(function (r) { return r.json(); })
+      .then(function (json) {
+        var list = (json.data || json || []).map(function (c) {
+          return { id: String(c.id), name: c.name || c.title || 'تصنيف #' + c.id };
+        });
+        _categoriesCache = list;
+        renderOptions('cp-category-select', 'cp-category-loading', list, preselected);
+      })
+      .catch(function () {
+        $('cp-category-loading').textContent = '❌ تعذّر تحميل التصنيفات';
+      });
+  }
+
+  function renderOptions(selectId, loadingId, list, preselected) {
+    var sel = $(selectId);
+    var lod = $(loadingId);
+    sel.innerHTML = '';
+    if (!list.length) {
+      lod.textContent = 'لا توجد بيانات';
+      return;
+    }
+    list.forEach(function (item) {
+      var opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.name;
+      sel.appendChild(opt);
+    });
+    markPreselected(sel, preselected);
+    lod.style.display = 'none';
+    sel.style.display = '';
+    sel.addEventListener('change', function () { syncSelectToIds(sel, 'cp-target-ids'); });
+    syncSelectToIds(sel, 'cp-target-ids');
   }
   fill(initialSettings);
 
