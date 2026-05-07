@@ -431,6 +431,165 @@
       </div>
     </div>
 
+    <!-- Social Proof Toaster -->
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">📣 إشعارات الإثبات الاجتماعي</h3>
+          <p class="text-sm text-slate-500">إشعارات صغيرة في زاوية المتجر تظهر رسائل مثل "5 أشخاص اشتروا هذا المنتج"</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="sp-enabled"><span class="slider"></span></label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="md:col-span-2">
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">الرسائل (سطر لكل رسالة)</label>
+          <textarea id="sp-messages" class="input" rows="3" style="resize:vertical;font-family:inherit"></textarea>
+        </div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">الموقع</label>
+          <select id="sp-position" class="input">
+            <option value="bottom-left">يسار الأسفل</option>
+            <option value="bottom-right">يمين الأسفل</option>
+          </select></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">المدة بين الرسائل (ms)</label>
+          <input id="sp-rotate" type="number" min="2000" step="500" class="input"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون الخلفية</label><input id="sp-bg" type="color" class="input" style="height:38px;padding:2px"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون النص</label><input id="sp-text-color" type="color" class="input" style="height:38px;padding:2px"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون النقطة</label><input id="sp-accent" type="color" class="input" style="height:38px;padding:2px"></div>
+      </div>
+    </div>
+
+    <!-- Stock Urgency -->
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">⚡ تنبيه نفاد المخزون</h3>
+          <p class="text-sm text-slate-500">يظهر "لم يتبق سوى X قطعة" تحت سعر المنتج عندما تكون الكمية قليلة</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="su-enabled"><span class="slider"></span></label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">الحد الأدنى للظهور</label>
+          <input id="su-threshold" type="number" min="1" class="input"></div>
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">النص (استخدم {count})</label>
+          <input id="su-message" type="text" class="input"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون الخلفية</label><input id="su-bg" type="color" class="input" style="height:38px;padding:2px"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون النص</label><input id="su-text-color" type="color" class="input" style="height:38px;padding:2px"></div>
+      </div>
+    </div>
+
+    <!-- Trust Badges -->
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">🛡️ شارات الثقة</h3>
+          <p class="text-sm text-slate-500">أيقونات الضمانات (شحن مجاني، دفع آمن، استرجاع) فوق أو تحت زر الشراء</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="tb-enabled"><span class="slider"></span></label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">الشارات (سطر لكل واحدة بالشكل: أيقونة | نص)</label>
+          <textarea id="tb-items" class="input" rows="4" style="resize:vertical;font-family:inherit" placeholder="🚚 | شحن مجاني&#10;🔒 | دفع آمن"></textarea></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">الموضع</label>
+          <select id="tb-placement" class="input">
+            <option value="below-cart">تحت زر "أضف للسلة"</option>
+            <option value="above-cart">فوق زر "أضف للسلة"</option>
+          </select></div>
+        <div></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون الخلفية</label><input id="tb-bg" type="color" class="input" style="height:38px;padding:2px"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون النص</label><input id="tb-text-color" type="color" class="input" style="height:38px;padding:2px"></div>
+      </div>
+    </div>
+
+    <!-- Recently Viewed -->
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">🕘 شاهدت مؤخراً</h3>
+          <p class="text-sm text-slate-500">شبكة منتجات شاهدها العميل في أسفل أي صفحة (تحفظ في متصفحه)</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="rv-enabled"><span class="slider"></span></label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">العنوان</label><input id="rv-title" type="text" class="input"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">عدد المنتجات</label><input id="rv-max" type="number" min="2" max="12" class="input"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون الخلفية</label><input id="rv-bg" type="color" class="input" style="height:38px;padding:2px"></div>
+      </div>
+    </div>
+
+    <!-- Exit Intent -->
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">🚪 إعلان الخروج</h3>
+          <p class="text-sm text-slate-500">نافذة تظهر للعميل عند محاولته إغلاق الموقع لإقناعه بالشراء</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="ei-enabled"><span class="slider"></span></label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">العنوان</label><input id="ei-title" type="text" class="input"></div>
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">الرسالة</label><input id="ei-message" type="text" class="input"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">نص الزر</label><input id="ei-btn-text" type="text" class="input"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">رابط الزر</label><input id="ei-btn-url" type="text" class="input"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">تكرار الظهور</label>
+          <select id="ei-once" class="input">
+            <option value="session">مرة في كل جلسة</option>
+            <option value="day">مرة كل يوم</option>
+            <option value="always">دائماً</option>
+          </select></div>
+        <div></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون الزر</label><input id="ei-bg" type="color" class="input" style="height:38px;padding:2px"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون نص الزر</label><input id="ei-text-color" type="color" class="input" style="height:38px;padding:2px"></div>
+      </div>
+    </div>
+
+    <!-- Custom Popup -->
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">🎁 نافذة مخصصة (Popup)</h3>
+          <p class="text-sm text-slate-500">نافذة قابلة للتخصيص بالكامل مع استهداف صفحات أو منتجات محددة</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="cp-enabled"><span class="slider"></span></label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">العنوان</label><input id="cp-title" type="text" class="input"></div>
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">النص</label><input id="cp-body" type="text" class="input"></div>
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">رابط صورة (اختياري)</label><input id="cp-image" type="text" class="input" placeholder="https://..."></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">نص الزر</label><input id="cp-btn-text" type="text" class="input"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">رابط الزر</label><input id="cp-btn-url" type="text" class="input"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">متى تظهر؟</label>
+          <select id="cp-trigger" class="input">
+            <option value="pageload">عند تحميل الصفحة</option>
+            <option value="delay">بعد تأخير (ثوانٍ)</option>
+            <option value="scroll">عند التمرير %</option>
+            <option value="exit">عند محاولة الخروج</option>
+          </select></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">قيمة المؤقت (ثوانٍ أو %)</label><input id="cp-trigger-value" type="number" min="1" class="input"></div>
+        <div class="md:col-span-2 border-t pt-3 mt-2 border-slate-200">
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">📍 استهداف الصفحات</label>
+          <select id="cp-targeting" class="input">
+            <option value="all">جميع صفحات المتجر</option>
+            <option value="product">جميع صفحات المنتجات</option>
+            <option value="specific-product">منتج محدد (أدخل ID المنتج)</option>
+            <option value="category">صفحات تصنيف محدد</option>
+          </select>
+          <p class="text-xs text-slate-400 mt-1">إذا اخترت منتج محدد أو تصنيف، أدخل المعرّفات في الحقل أدناه (افصل بفواصل)</p>
+        </div>
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">معرّفات المنتجات/التصنيفات (مفصولة بفواصل)</label>
+          <input id="cp-target-ids" type="text" class="input" placeholder="مثال: 12345, 67890"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">تكرار الظهور</label>
+          <select id="cp-once" class="input">
+            <option value="session">مرة في كل جلسة</option>
+            <option value="day">مرة كل يوم</option>
+            <option value="always">دائماً</option>
+          </select></div>
+        <div></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون الخلفية</label><input id="cp-bg" type="color" class="input" style="height:38px;padding:2px"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون النص</label><input id="cp-text-color" type="color" class="input" style="height:38px;padding:2px"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون الزر</label><input id="cp-accent" type="color" class="input" style="height:38px;padding:2px"></div>
+      </div>
+    </div>
+
     <div id="save-status" class="text-sm text-slate-500 text-center"></div>
     <button id="save-settings" class="grad-bg text-white w-full py-3 rounded-xl font-bold shadow-glow">💾 حفظ الإعدادات</button>
 
@@ -508,6 +667,61 @@ function t(e, name) {
       $('timer-bg2').value = s.productTimer.bgColor2 || '#f97316';
       $('timer-text-color').value = s.productTimer.textColor || '#FFFFFF';
     }
+    if (s.socialProof) {
+      $('sp-enabled').checked = !!s.socialProof.enabled;
+      $('sp-messages').value = (s.socialProof.messages || []).join('\n');
+      $('sp-position').value = s.socialProof.position || 'bottom-left';
+      $('sp-rotate').value = s.socialProof.rotateEvery || 7000;
+      $('sp-bg').value = s.socialProof.bgColor || '#FFFFFF';
+      $('sp-text-color').value = s.socialProof.textColor || '#0f172a';
+      $('sp-accent').value = s.socialProof.accentColor || '#10b981';
+    }
+    if (s.stockUrgency) {
+      $('su-enabled').checked = !!s.stockUrgency.enabled;
+      $('su-threshold').value = s.stockUrgency.threshold || 5;
+      $('su-message').value = s.stockUrgency.message || '';
+      $('su-bg').value = s.stockUrgency.bgColor || '#fef3c7';
+      $('su-text-color').value = s.stockUrgency.textColor || '#92400e';
+    }
+    if (s.trustBadges) {
+      $('tb-enabled').checked = !!s.trustBadges.enabled;
+      $('tb-items').value = (s.trustBadges.items || []).map(function (it) { return (it.icon || '') + ' | ' + (it.text || ''); }).join('\n');
+      $('tb-placement').value = s.trustBadges.placement || 'below-cart';
+      $('tb-bg').value = s.trustBadges.bgColor || '#f1f5f9';
+      $('tb-text-color').value = s.trustBadges.textColor || '#0f172a';
+    }
+    if (s.recentlyViewed) {
+      $('rv-enabled').checked = !!s.recentlyViewed.enabled;
+      $('rv-title').value = s.recentlyViewed.title || '';
+      $('rv-max').value = s.recentlyViewed.maxItems || 8;
+      $('rv-bg').value = s.recentlyViewed.bgColor || '#f8fafc';
+    }
+    if (s.exitIntent) {
+      $('ei-enabled').checked = !!s.exitIntent.enabled;
+      $('ei-title').value = s.exitIntent.title || '';
+      $('ei-message').value = s.exitIntent.message || '';
+      $('ei-btn-text').value = s.exitIntent.buttonText || '';
+      $('ei-btn-url').value = s.exitIntent.buttonUrl || '';
+      $('ei-once').value = s.exitIntent.showOnce || 'session';
+      $('ei-bg').value = s.exitIntent.bgColor || '#0d9488';
+      $('ei-text-color').value = s.exitIntent.textColor || '#FFFFFF';
+    }
+    if (s.customPopup) {
+      $('cp-enabled').checked = !!s.customPopup.enabled;
+      $('cp-title').value = s.customPopup.title || '';
+      $('cp-body').value = s.customPopup.body || '';
+      $('cp-image').value = s.customPopup.imageUrl || '';
+      $('cp-btn-text').value = s.customPopup.buttonText || '';
+      $('cp-btn-url').value = s.customPopup.buttonUrl || '';
+      $('cp-trigger').value = s.customPopup.trigger || 'delay';
+      $('cp-trigger-value').value = s.customPopup.triggerValue || 5;
+      $('cp-targeting').value = s.customPopup.targeting || 'all';
+      $('cp-target-ids').value = s.customPopup.targetIds || '';
+      $('cp-once').value = s.customPopup.showOnce || 'session';
+      $('cp-bg').value = s.customPopup.bgColor || '#FFFFFF';
+      $('cp-text-color').value = s.customPopup.textColor || '#0f172a';
+      $('cp-accent').value = s.customPopup.accentColor || '#0d9488';
+    }
   }
   fill(initialSettings);
 
@@ -551,6 +765,64 @@ function t(e, name) {
           bgColor: $('timer-bg').value,
           bgColor2: $('timer-bg2').value,
           textColor: $('timer-text-color').value,
+        },
+        socialProof: {
+          enabled: $('sp-enabled').checked,
+          messages: $('sp-messages').value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean),
+          position: $('sp-position').value,
+          rotateEvery: parseInt($('sp-rotate').value, 10) || 7000,
+          bgColor: $('sp-bg').value,
+          textColor: $('sp-text-color').value,
+          accentColor: $('sp-accent').value,
+        },
+        stockUrgency: {
+          enabled: $('su-enabled').checked,
+          threshold: parseInt($('su-threshold').value, 10) || 5,
+          message: $('su-message').value.trim(),
+          bgColor: $('su-bg').value,
+          textColor: $('su-text-color').value,
+        },
+        trustBadges: {
+          enabled: $('tb-enabled').checked,
+          items: $('tb-items').value.split('\n').map(function (line) {
+            var parts = line.split('|').map(function (p) { return p.trim(); });
+            return parts[0] || parts[1] ? { icon: parts[0] || '', text: parts[1] || '' } : null;
+          }).filter(Boolean),
+          placement: $('tb-placement').value,
+          bgColor: $('tb-bg').value,
+          textColor: $('tb-text-color').value,
+        },
+        recentlyViewed: {
+          enabled: $('rv-enabled').checked,
+          title: $('rv-title').value.trim(),
+          maxItems: parseInt($('rv-max').value, 10) || 8,
+          bgColor: $('rv-bg').value,
+        },
+        exitIntent: {
+          enabled: $('ei-enabled').checked,
+          title: $('ei-title').value.trim(),
+          message: $('ei-message').value.trim(),
+          buttonText: $('ei-btn-text').value.trim(),
+          buttonUrl: $('ei-btn-url').value.trim(),
+          showOnce: $('ei-once').value,
+          bgColor: $('ei-bg').value,
+          textColor: $('ei-text-color').value,
+        },
+        customPopup: {
+          enabled: $('cp-enabled').checked,
+          title: $('cp-title').value.trim(),
+          body: $('cp-body').value.trim(),
+          imageUrl: $('cp-image').value.trim(),
+          buttonText: $('cp-btn-text').value.trim(),
+          buttonUrl: $('cp-btn-url').value.trim(),
+          trigger: $('cp-trigger').value,
+          triggerValue: parseInt($('cp-trigger-value').value, 10) || 5,
+          targeting: $('cp-targeting').value,
+          targetIds: $('cp-target-ids').value.trim(),
+          showOnce: $('cp-once').value,
+          bgColor: $('cp-bg').value,
+          textColor: $('cp-text-color').value,
+          accentColor: $('cp-accent').value,
         },
       };
       fetch('/api/settings?token=' + encodeURIComponent(token), {

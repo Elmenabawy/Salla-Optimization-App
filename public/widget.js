@@ -86,6 +86,32 @@
       ".alfa-timer-cell{background:rgba(255,255,255,.18);backdrop-filter:blur(4px);border-radius:8px;padding:6px 10px;min-width:54px}" +
       ".alfa-timer-num{font-size:22px;font-weight:900;line-height:1}" +
       ".alfa-timer-label{font-size:10px;opacity:.8;margin-top:3px}" +
+      ".alfa-toast{position:fixed;bottom:20px;border-radius:12px;padding:12px 16px;font-family:system-ui,sans-serif;font-size:13px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);z-index:99996;max-width:320px;animation:alfaSlideIn .4s ease;border:1px solid rgba(0,0,0,.05)}" +
+      ".alfa-toast.l{left:20px}.alfa-toast.r{right:20px}" +
+      ".alfa-toast-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;animation:alfaPulseDot 1.5s infinite}" +
+      "@keyframes alfaPulseDot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.4)}}" +
+      "@keyframes alfaSlideIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}" +
+      ".alfa-stock{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:8px;font-family:system-ui,sans-serif;font-weight:700;font-size:13px;margin:8px 0}" +
+      ".alfa-rv{margin:30px auto;padding:20px;border-radius:16px;font-family:system-ui,sans-serif;max-width:1200px}" +
+      ".alfa-rv-title{font-size:18px;font-weight:800;margin-bottom:16px}" +
+      ".alfa-rv-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:12px}" +
+      ".alfa-rv-item{background:#fff;border-radius:10px;overflow:hidden;text-decoration:none;color:inherit;border:1px solid #e2e8f0;transition:transform .2s,box-shadow .2s}" +
+      ".alfa-rv-item:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.08)}" +
+      ".alfa-rv-img{width:100%;aspect-ratio:1;object-fit:cover;background:#f1f5f9}" +
+      ".alfa-rv-name{padding:8px;font-size:12px;font-weight:600;line-height:1.4;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}" +
+      ".alfa-overlay{position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;animation:alfaFade .3s ease}" +
+      ".alfa-popup{background:#fff;border-radius:20px;max-width:480px;width:100%;overflow:hidden;font-family:system-ui,sans-serif;animation:alfaPop .4s cubic-bezier(.16,1,.3,1)}" +
+      ".alfa-popup-img{width:100%;aspect-ratio:16/9;object-fit:cover;background:#f1f5f9}" +
+      ".alfa-popup-body{padding:24px;text-align:center}" +
+      ".alfa-popup-title{font-size:24px;font-weight:900;margin-bottom:8px}" +
+      ".alfa-popup-text{font-size:15px;line-height:1.6;margin-bottom:20px;opacity:.85}" +
+      ".alfa-popup-btn{display:inline-block;padding:12px 28px;border-radius:10px;font-weight:800;text-decoration:none;font-size:15px;transition:transform .15s}" +
+      ".alfa-popup-btn:hover{transform:scale(1.04)}" +
+      ".alfa-popup-close{position:absolute;top:16px;right:16px;background:rgba(0,0,0,.1);border:none;width:34px;height:34px;border-radius:50%;cursor:pointer;font-size:20px;line-height:1;color:#475569}" +
+      "@keyframes alfaPop{from{opacity:0;transform:scale(.92)}to{opacity:1;transform:scale(1)}}" +
+      ".alfa-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;padding:14px;border-radius:12px;margin:14px 0;font-family:system-ui,sans-serif}" +
+      ".alfa-trust-item{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:600;text-align:center;flex:1;min-width:80px}" +
+      ".alfa-trust-icon{font-size:28px}" +
       "@keyframes alfaFade{from{opacity:0}to{opacity:1}}";
     document.head.appendChild(s);
   }
@@ -326,6 +352,268 @@
     }
   }
 
+  // ---- Helper: get current product info from Salla / DOM ----
+  function getCurrentProduct() {
+    var info = { id: null, name: "", url: location.pathname, image: "", price: "", quantity: null };
+    try {
+      if (window.salla && salla.config && salla.config.get) {
+        info.id = salla.config.get("page.id") || salla.config.get("product.id") || null;
+        info.name = salla.config.get("product.name") || "";
+        info.image = salla.config.get("product.image") || "";
+        info.price = salla.config.get("product.price") || "";
+        info.quantity = salla.config.get("product.quantity");
+      }
+    } catch (e) {}
+    if (!info.name) {
+      var h1 = document.querySelector("h1, .product-title, salla-product-title");
+      if (h1) info.name = h1.textContent.trim();
+    }
+    if (!info.image) {
+      var img = document.querySelector(".product-image img, .product-gallery img, salla-product-image img, [class*='product'] img");
+      if (img) info.image = img.src;
+    }
+    return info;
+  }
+
+  // ---- Helper: shown-once tracking ----
+  function shouldShow(key, freq) {
+    if (freq === "always") return true;
+    var k = "alfa-shown-" + key;
+    try {
+      if (freq === "session") {
+        if (sessionStorage.getItem(k)) return false;
+        sessionStorage.setItem(k, "1");
+        return true;
+      }
+      if (freq === "day") {
+        var today = new Date().toDateString();
+        if (localStorage.getItem(k) === today) return false;
+        localStorage.setItem(k, today);
+        return true;
+      }
+    } catch (e) {}
+    return true;
+  }
+
+  // ---- Social proof toaster ----
+  function renderSocialProof(opts) {
+    if (!opts.enabled) return;
+    var msgs = (opts.messages || []).filter(Boolean);
+    if (!msgs.length) return;
+    var idx = 0;
+    function show() {
+      var t = document.createElement("div");
+      t.className = "alfa-toast " + (opts.position === "bottom-right" ? "r" : "l");
+      t.style.background = opts.bgColor || "#FFFFFF";
+      t.style.color = opts.textColor || "#0f172a";
+      t.innerHTML = '<span class="alfa-toast-dot" style="background:' + (opts.accentColor || "#10b981") + '"></span><span>' + msgs[idx] + "</span>";
+      document.body.appendChild(t);
+      setTimeout(function () {
+        t.style.transition = "opacity .4s, transform .4s";
+        t.style.opacity = "0";
+        t.style.transform = "translateY(20px)";
+        setTimeout(function () { t.remove(); }, 400);
+      }, (opts.rotateEvery || 7000) - 500);
+      idx = (idx + 1) % msgs.length;
+    }
+    setTimeout(show, 2000);
+    setInterval(show, opts.rotateEvery || 7000);
+  }
+
+  // ---- Stock urgency badge ----
+  function renderStockUrgency(opts) {
+    if (!opts.enabled || !isProductPage()) return;
+    var info = getCurrentProduct();
+    var qty = info.quantity;
+    if (qty === null || qty === undefined) {
+      // Try to scrape from DOM
+      var stockEl = document.querySelector("[class*='stock'], salla-product-quantity");
+      if (stockEl) {
+        var m = stockEl.textContent.match(/\d+/);
+        if (m) qty = parseInt(m[0], 10);
+      }
+    }
+    if (qty === null || qty === undefined || qty === "" || qty <= 0) return;
+    if (qty > (opts.threshold || 5)) return;
+    var msg = (opts.message || "🔥 لم يتبق سوى {count} قطعة!").replace("{count}", qty);
+    var target = findProductInsertTarget("below-price");
+    if (!target) return;
+    var el = document.createElement("div");
+    el.className = "alfa-stock";
+    el.style.background = opts.bgColor || "#fef3c7";
+    el.style.color = opts.textColor || "#92400e";
+    el.textContent = msg;
+    target.parentNode.insertBefore(el, target.nextSibling);
+  }
+
+  // ---- Recently viewed (track + render) ----
+  var RV_KEY = "alfa-rv-products";
+  function trackRecentlyViewed() {
+    if (!isProductPage()) return;
+    var info = getCurrentProduct();
+    if (!info.name) return;
+    try {
+      var list = JSON.parse(localStorage.getItem(RV_KEY) || "[]");
+      // De-dupe by URL
+      list = list.filter(function (x) { return x.url !== info.url; });
+      list.unshift({ name: info.name, url: info.url, image: info.image });
+      list = list.slice(0, 12);
+      localStorage.setItem(RV_KEY, JSON.stringify(list));
+    } catch (e) {}
+  }
+  function renderRecentlyViewed(opts) {
+    if (!opts.enabled) return;
+    var list = [];
+    try { list = JSON.parse(localStorage.getItem(RV_KEY) || "[]"); } catch (e) {}
+    // Don't show on the page of the product the user is currently viewing
+    list = list.filter(function (x) { return x.url !== location.pathname; });
+    if (!list.length) return;
+    var max = opts.maxItems || 8;
+    list = list.slice(0, max);
+    var wrap = document.createElement("div");
+    wrap.className = "alfa-rv";
+    wrap.style.background = opts.bgColor || "#f8fafc";
+    wrap.style.color = opts.textColor || "#0f172a";
+    var html = '<div class="alfa-rv-title">' + (opts.title || "🕘 شاهدت مؤخراً") + "</div>";
+    html += '<div class="alfa-rv-grid">';
+    list.forEach(function (p) {
+      html += '<a class="alfa-rv-item" href="' + p.url + '">';
+      if (p.image) html += '<img class="alfa-rv-img" src="' + p.image + '" alt="">';
+      html += '<div class="alfa-rv-name">' + (p.name || "") + "</div></a>";
+    });
+    html += "</div>";
+    wrap.innerHTML = html;
+    // Insert before footer (or at end of body)
+    var footer = document.querySelector("footer, .footer, salla-footer");
+    if (footer) footer.parentNode.insertBefore(wrap, footer);
+    else document.body.appendChild(wrap);
+  }
+
+  // ---- Trust badges ----
+  function renderTrustBadges(opts) {
+    if (!opts.enabled || !isProductPage()) return;
+    var items = (opts.items || []).filter(function (x) { return x && (x.icon || x.text); });
+    if (!items.length) return;
+    var target = findProductInsertTarget(opts.placement === "below-price" ? "below-price" : "above-cart");
+    if (!target) return;
+    var wrap = document.createElement("div");
+    wrap.className = "alfa-trust";
+    wrap.style.background = opts.bgColor || "#f1f5f9";
+    wrap.style.color = opts.textColor || "#0f172a";
+    items.forEach(function (it) {
+      wrap.innerHTML += '<div class="alfa-trust-item"><div class="alfa-trust-icon">' + (it.icon || "✓") + "</div><div>" + (it.text || "") + "</div></div>";
+    });
+    if (opts.placement === "below-price") target.parentNode.insertBefore(wrap, target.nextSibling);
+    else target.parentNode.insertBefore(wrap, target);
+  }
+
+  // ---- Popup helper (used by exit-intent + custom popup) ----
+  function showPopup(opts) {
+    var overlay = document.createElement("div");
+    overlay.className = "alfa-overlay";
+    var popup = document.createElement("div");
+    popup.className = "alfa-popup";
+    popup.style.background = opts.bgColor || "#FFFFFF";
+    popup.style.color = opts.textColor || "#0f172a";
+    popup.style.position = "relative";
+    var html = "";
+    html += '<button class="alfa-popup-close" aria-label="إغلاق">×</button>';
+    if (opts.imageUrl) html += '<img class="alfa-popup-img" src="' + opts.imageUrl + '" alt="">';
+    html += '<div class="alfa-popup-body">';
+    html += '<div class="alfa-popup-title">' + (opts.title || "") + "</div>";
+    html += '<div class="alfa-popup-text">' + (opts.body || opts.message || "") + "</div>";
+    if (opts.buttonText) {
+      html += '<a class="alfa-popup-btn" href="' + (opts.buttonUrl || "#") + '" style="background:' + (opts.accentColor || opts.bgColor || "#0d9488") + ";color:" + (opts.buttonTextColor || opts.textColor || "#FFFFFF") + '">' + opts.buttonText + "</a>";
+    }
+    html += "</div>";
+    popup.innerHTML = html;
+    overlay.appendChild(popup);
+    document.body.appendChild(overlay);
+    function close() { overlay.style.transition = "opacity .25s"; overlay.style.opacity = "0"; setTimeout(function () { overlay.remove(); }, 250); }
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+    popup.querySelector(".alfa-popup-close").addEventListener("click", close);
+  }
+
+  // ---- Exit-intent popup ----
+  function renderExitIntent(opts) {
+    if (!opts.enabled) return;
+    if (!shouldShow("exit-intent", opts.showOnce || "session")) return;
+    var fired = false;
+    function trigger() {
+      if (fired) return;
+      fired = true;
+      showPopup({
+        title: opts.title,
+        body: opts.message,
+        buttonText: opts.buttonText,
+        buttonUrl: opts.buttonUrl,
+        bgColor: "#FFFFFF",
+        textColor: "#0f172a",
+        accentColor: opts.bgColor || "#0d9488",
+        buttonTextColor: opts.textColor || "#FFFFFF",
+      });
+    }
+    document.addEventListener("mouseleave", function (e) {
+      if (e.clientY < 10 && !fired) trigger();
+    });
+    // Mobile fallback: trigger on visibility change after some interaction
+    var seen = 0;
+    document.addEventListener("scroll", function () { seen++; });
+    setTimeout(function () {
+      document.addEventListener("visibilitychange", function () {
+        if (document.visibilityState === "hidden" && seen > 3) trigger();
+      });
+    }, 5000);
+  }
+
+  // ---- Custom popup with targeting ----
+  function popupShouldShowOnPage(opts) {
+    var target = (opts.targeting || "all").toLowerCase();
+    if (target === "all") return true;
+    if (target === "product") return isProductPage();
+    var info = getCurrentProduct();
+    var ids = String(opts.targetIds || "").split(",").map(function (s) { return s.trim(); }).filter(Boolean);
+    if (target === "specific-product") {
+      return isProductPage() && info.id && ids.indexOf(String(info.id)) !== -1;
+    }
+    if (target === "category") {
+      return /\/c\d+|\/category\/|\/categories\//.test(location.pathname) ||
+        ids.some(function (id) { return location.pathname.indexOf(id) !== -1; });
+    }
+    return true;
+  }
+  function renderCustomPopup(opts) {
+    if (!opts.enabled) return;
+    if (!popupShouldShowOnPage(opts)) return;
+    if (!shouldShow("custom-popup", opts.showOnce || "session")) return;
+    var trig = (opts.trigger || "delay").toLowerCase();
+    function fire() {
+      showPopup({
+        title: opts.title,
+        body: opts.body,
+        imageUrl: opts.imageUrl,
+        buttonText: opts.buttonText,
+        buttonUrl: opts.buttonUrl,
+        bgColor: opts.bgColor,
+        textColor: opts.textColor,
+        accentColor: opts.accentColor,
+      });
+    }
+    if (trig === "pageload") fire();
+    else if (trig === "delay") setTimeout(fire, (opts.triggerValue || 5) * 1000);
+    else if (trig === "scroll") {
+      var threshold = opts.triggerValue || 50;
+      var done = false;
+      window.addEventListener("scroll", function () {
+        if (done) return;
+        var scrolled = (window.scrollY / (document.body.scrollHeight - window.innerHeight)) * 100;
+        if (scrolled >= threshold) { done = true; fire(); }
+      });
+    } else if (trig === "exit") {
+      document.addEventListener("mouseleave", function (e) { if (e.clientY < 10) fire(); }, { once: true });
+    }
+  }
+
   function init() {
     fetchConfig(function (cfg) {
       if (!cfg) return;
@@ -334,6 +622,13 @@
       try { renderShippingBar(cfg.freeShippingBar || {}); } catch (e) {}
       try { renderStickyCart(cfg.stickyCart || {}); } catch (e) {}
       try { renderProductTimer(cfg.productTimer || {}); } catch (e) {}
+      try { renderSocialProof(cfg.socialProof || {}); } catch (e) {}
+      try { renderStockUrgency(cfg.stockUrgency || {}); } catch (e) {}
+      try { renderTrustBadges(cfg.trustBadges || {}); } catch (e) {}
+      try { trackRecentlyViewed(); } catch (e) {}
+      try { renderRecentlyViewed(cfg.recentlyViewed || {}); } catch (e) {}
+      try { renderExitIntent(cfg.exitIntent || {}); } catch (e) {}
+      try { renderCustomPopup(cfg.customPopup || {}); } catch (e) {}
     });
   }
 
