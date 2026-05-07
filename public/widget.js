@@ -1,9 +1,17 @@
 (function () {
-  // Find this script's own URL so we can build absolute URLs back to our server
-  var scripts = document.getElementsByTagName("script");
-  var self = scripts[scripts.length - 1];
-  var apiBase = (function () {
-    try { return new URL(self.src).origin; } catch (e) { return ""; }
+  // Hardcoded API base — Cloudflare Rocket Loader on Salla storefronts
+  // rewrites script execution order, so deriving the origin from the last
+  // <script> tag picks up unrelated 3rd-party scripts (sift, etc).
+  var apiBase = "https://salla-optimization-app-production.up.railway.app";
+
+  // Try to find our own script tag for the ?store= param (Rocket Loader
+  // moves it but we can match by src host)
+  var self = (function () {
+    var all = document.getElementsByTagName("script");
+    for (var i = 0; i < all.length; i++) {
+      if (all[i].src && all[i].src.indexOf("/widget.js") !== -1) return all[i];
+    }
+    return null;
   })();
 
   // Get the store/merchant ID from multiple possible sources
@@ -15,6 +23,16 @@
         var m = self.src.match(/[?&]store=([^&]+)/);
         if (m && m[1] && m[1] !== "{{" && m[1].indexOf("store.id") === -1) {
           return decodeURIComponent(m[1]);
+        }
+      }
+      // Fallback: scan all scripts for ?store= pattern
+      var all = document.getElementsByTagName("script");
+      for (var i = 0; i < all.length; i++) {
+        if (all[i].src && all[i].src.indexOf("/widget.js") !== -1) {
+          var mm = all[i].src.match(/[?&]store=([^&]+)/);
+          if (mm && mm[1] && mm[1] !== "{{" && mm[1].indexOf("store.id") === -1) {
+            return decodeURIComponent(mm[1]);
+          }
         }
       }
     } catch (e) {}
