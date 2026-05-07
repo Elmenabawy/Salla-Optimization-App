@@ -340,6 +340,39 @@
     </div>
   </div>
 
+  <!-- Product Timer -->
+  <div class="glass rounded-2xl p-6">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <h2 class="text-xl font-bold text-white mb-1">⏰ عداد العرض في صفحة المنتج</h2>
+        <p class="text-sm text-slate-400">يظهر عداد تنازلي على صفحة كل منتج لتحفيز الشراء السريع</p>
+      </div>
+      <label class="f-switch"><input type="checkbox" id="f-timer-enabled"><span class="f-slider"></span></label>
+    </div>
+    <div class="grid md:grid-cols-2 gap-3">
+      <div>
+        <label class="f-label">نوع العداد</label>
+        <select id="f-timer-mode" class="f-input">
+          <option value="daily">ينتهي يومياً عند منتصف الليل</option>
+          <option value="fixed">تاريخ ووقت محدد</option>
+        </select>
+      </div>
+      <div><label class="f-label">تاريخ الانتهاء</label><input id="f-timer-end" type="datetime-local" class="f-input"></div>
+      <div class="md:col-span-2"><label class="f-label">العنوان</label><input id="f-timer-title" type="text" class="f-input"></div>
+      <div>
+        <label class="f-label">موضع العرض</label>
+        <select id="f-timer-placement" class="f-input">
+          <option value="above-cart">فوق زر "أضف للسلة"</option>
+          <option value="below-price">تحت سعر المنتج</option>
+        </select>
+      </div>
+      <div></div>
+      <div><label class="f-label">لون البداية</label><input id="f-timer-bg" type="color" class="f-input" style="height:38px;padding:2px;"></div>
+      <div><label class="f-label">لون النهاية</label><input id="f-timer-bg2" type="color" class="f-input" style="height:38px;padding:2px;"></div>
+      <div><label class="f-label">لون النص</label><input id="f-timer-text-color" type="color" class="f-input" style="height:38px;padding:2px;"></div>
+    </div>
+  </div>
+
   <div id="f-status" class="text-sm text-slate-400 text-center"></div>
   <button id="f-save" class="grad-bg text-white w-full py-3 rounded-xl font-bold shadow-glow">💾 حفظ الإعدادات</button>
 
@@ -395,6 +428,16 @@ function showTab(e, name) {
       $('f-cart-bg').value = s.stickyCart.bgColor || '#0d9488';
       $('f-cart-text-color').value = s.stickyCart.textColor || '#FFFFFF';
     }
+    if (s.productTimer) {
+      $('f-timer-enabled').checked = !!s.productTimer.enabled;
+      $('f-timer-mode').value = s.productTimer.mode || 'daily';
+      $('f-timer-end').value = (s.productTimer.endDate || '').slice(0, 16);
+      $('f-timer-title').value = s.productTimer.title || '';
+      $('f-timer-placement').value = s.productTimer.placement || 'above-cart';
+      $('f-timer-bg').value = s.productTimer.bgColor || '#dc2626';
+      $('f-timer-bg2').value = s.productTimer.bgColor2 || '#f97316';
+      $('f-timer-text-color').value = s.productTimer.textColor || '#FFFFFF';
+    }
   });
 
   $('f-save').addEventListener('click', function () {
@@ -404,6 +447,7 @@ function showTab(e, name) {
       whatsapp: { enabled: $('f-wa-enabled').checked, number: $('f-wa-number').value.trim(), message: $('f-wa-message').value.trim(), position: $('f-wa-position').value, color: $('f-wa-color').value, iconColor: $('f-wa-icon-color').value },
       freeShippingBar: { enabled: $('f-ship-enabled').checked, threshold: parseInt($('f-ship-threshold').value, 10) || 0, currency: $('f-ship-currency').value.trim(), text: $('f-ship-text').value.trim(), bgColor: $('f-ship-bg').value, bgColor2: $('f-ship-bg2').value, textColor: $('f-ship-text-color').value },
       stickyCart: { enabled: $('f-cart-enabled').checked, text: $('f-cart-text').value.trim(), position: $('f-cart-position').value, bgColor: $('f-cart-bg').value, textColor: $('f-cart-text-color').value },
+      productTimer: { enabled: $('f-timer-enabled').checked, mode: $('f-timer-mode').value, endDate: $('f-timer-end').value, title: $('f-timer-title').value.trim(), placement: $('f-timer-placement').value, bgColor: $('f-timer-bg').value, bgColor2: $('f-timer-bg2').value, textColor: $('f-timer-text-color').value },
     };
     fetch('/api/my-settings', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
       .then(r => r.json())

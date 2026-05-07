@@ -80,6 +80,12 @@
       ".alfa-cart{position:fixed;padding:12px 24px;border-radius:30px;font-family:system-ui,sans-serif;font-weight:700;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:99997;animation:alfaFade .4s ease;cursor:pointer;user-select:none}" +
       ".alfa-cart:hover{box-shadow:0 6px 16px rgba(0,0,0,.25)}" +
       ".alfa-cart.dragging{opacity:.85;transition:none}" +
+      ".alfa-timer{font-family:system-ui,sans-serif;border-radius:12px;padding:14px 18px;margin:14px 0;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.08);animation:alfaFade .4s ease}" +
+      ".alfa-timer-title{font-size:14px;font-weight:700;margin-bottom:8px;opacity:.95}" +
+      ".alfa-timer-clock{display:flex;justify-content:center;gap:8px;font-variant-numeric:tabular-nums}" +
+      ".alfa-timer-cell{background:rgba(255,255,255,.18);backdrop-filter:blur(4px);border-radius:8px;padding:6px 10px;min-width:54px}" +
+      ".alfa-timer-num{font-size:22px;font-weight:900;line-height:1}" +
+      ".alfa-timer-label{font-size:10px;opacity:.8;margin-top:3px}" +
       "@keyframes alfaFade{from{opacity:0}to{opacity:1}}";
     document.head.appendChild(s);
   }
@@ -204,6 +210,122 @@
     el.addEventListener("click", onClick, true);
   }
 
+  // ---- Product page detection + countdown timer ----
+
+  function isProductPage() {
+    // 1. URL pattern
+    if (/\/p\d+|\/product\/|\/products\//.test(location.pathname)) return true;
+    // 2. Salla page-type config
+    try {
+      if (window.salla && salla.config && salla.config.get) {
+        var pt = salla.config.get("page.type") || salla.config.get("type");
+        if (pt && /^product/.test(String(pt))) return true;
+      }
+    } catch (e) {}
+    // 3. DOM signals (product-specific custom elements/buttons)
+    return !!document.querySelector(
+      "salla-add-product-button, salla-product-card-buttons, [data-product-id], #product, .product-page, .product-details"
+    );
+  }
+
+  // Find a node we can insert the timer beside. Tries several Salla selectors.
+  function findProductInsertTarget(placement) {
+    var aboveCart = [
+      "salla-add-product-button",
+      ".product-actions",
+      ".add-to-cart",
+      "form.product-form",
+      ".product-buttons",
+    ];
+    var belowPrice = [
+      ".product-price",
+      ".price",
+      "salla-product-price",
+      ".s-product-price",
+    ];
+    var list = placement === "below-price" ? belowPrice.concat(aboveCart) : aboveCart.concat(belowPrice);
+    for (var i = 0; i < list.length; i++) {
+      var el = document.querySelector(list[i]);
+      if (el) return el;
+    }
+    return null;
+  }
+
+  function renderProductTimer(opts) {
+    if (!opts.enabled) return;
+    if (!isProductPage()) return;
+
+    function endsAt() {
+      if (opts.mode === "fixed" && opts.endDate) {
+        var t = Date.parse(opts.endDate);
+        return isNaN(t) ? null : t;
+      }
+      // Default: midnight tonight (local time)
+      var d = new Date();
+      d.setHours(23, 59, 59, 999);
+      return d.getTime();
+    }
+
+    function buildEl() {
+      var el = document.createElement("div");
+      el.className = "alfa-timer";
+      el.setAttribute("dir", "rtl");
+      var c1 = opts.bgColor || "#dc2626";
+      var c2 = opts.bgColor2 || c1;
+      el.style.background = "linear-gradient(135deg," + c1 + "," + c2 + ")";
+      el.style.color = opts.textColor || "#FFFFFF";
+      el.innerHTML =
+        '<div class="alfa-timer-title">' + (opts.title || "⏰ العرض ينتهي خلال") + "</div>" +
+        '<div class="alfa-timer-clock">' +
+        '<div class="alfa-timer-cell"><div class="alfa-timer-num" data-d>00</div><div class="alfa-timer-label">يوم</div></div>' +
+        '<div class="alfa-timer-cell"><div class="alfa-timer-num" data-h>00</div><div class="alfa-timer-label">ساعة</div></div>' +
+        '<div class="alfa-timer-cell"><div class="alfa-timer-num" data-m>00</div><div class="alfa-timer-label">دقيقة</div></div>' +
+        '<div class="alfa-timer-cell"><div class="alfa-timer-num" data-s>00</div><div class="alfa-timer-label">ثانية</div></div>' +
+        "</div>";
+      return el;
+    }
+
+    function tryInsert() {
+      var target = findProductInsertTarget(opts.placement);
+      if (!target) return false;
+      if (document.getElementById("alfa-product-timer")) return true; // already inserted
+      var el = buildEl();
+      el.id = "alfa-product-timer";
+      target.parentNode.insertBefore(el, target);
+      var pad2 = function (n) { return n < 10 ? "0" + n : "" + n; };
+      var deadline = endsAt();
+      function tick() {
+        var diff = Math.max(0, deadline - Date.now());
+        var d = Math.floor(diff / 86400000);
+        var h = Math.floor((diff % 86400000) / 3600000);
+        var m = Math.floor((diff % 3600000) / 60000);
+        var s = Math.floor((diff % 60000) / 1000);
+        el.querySelector("[data-d]").textContent = pad2(d);
+        el.querySelector("[data-h]").textContent = pad2(h);
+        el.querySelector("[data-m]").textContent = pad2(m);
+        el.querySelector("[data-s]").textContent = pad2(s);
+        if (diff <= 0 && opts.mode === "fixed") {
+          clearInterval(timerId);
+          el.style.opacity = ".6";
+        }
+      }
+      tick();
+      var timerId = setInterval(tick, 1000);
+      return true;
+    }
+
+    if (tryInsert()) return;
+    // The product element might not be in the DOM yet (Salla SPA). Retry briefly.
+    var attempts = 0;
+    var retryId = setInterval(function () {
+      if (tryInsert() || ++attempts > 20) clearInterval(retryId);
+    }, 500);
+    // Also re-run on Salla SPA navigation
+    if (window.salla && salla.event && salla.event.on) {
+      try { salla.event.on("page::changed", function () { setTimeout(tryInsert, 300); }); } catch (e) {}
+    }
+  }
+
   function init() {
     fetchConfig(function (cfg) {
       if (!cfg) return;
@@ -211,6 +333,7 @@
       try { renderWhatsApp(cfg.whatsapp || {}); } catch (e) {}
       try { renderShippingBar(cfg.freeShippingBar || {}); } catch (e) {}
       try { renderStickyCart(cfg.stickyCart || {}); } catch (e) {}
+      try { renderProductTimer(cfg.productTimer || {}); } catch (e) {}
     });
   }
 
