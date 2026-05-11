@@ -19,7 +19,7 @@
   },
   "license": "ISC",
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.92.0",
+    "@anthropic-ai/sdk": "^0.93.0",
     "@ngrok/ngrok": "^1.7.0",
     "@salla.sa/passport-strategy": "^1.0.6",
     "@salla.sa/webhooks-actions": "^1.0",
