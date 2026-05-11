@@ -343,7 +343,9 @@ async function getAccessTokenForMerchant(merchantId) {
 // ============================================================
 app.use("/api/widget-config", (req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*");
-  res.setHeader("Cache-Control", "public, max-age=60"); // 1-minute CDN cache
+  res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+  res.setHeader("Pragma", "no-cache");
+  res.setHeader("Expires", "0");
   next();
 });
 
@@ -392,6 +394,29 @@ async function getMerchantData(req, res, sallaUrl) {
     res.json({ data: [] });
   }
 }
+
+// Debug endpoint — shows whether settings file actually exists on disk
+app.get("/api/debug-settings/:merchantId", (req, res) => {
+  const mid = req.params.merchantId;
+  const filePath = path.join(__dirname, "data", `settings_${mid}.json`);
+  const exists = fs.existsSync(filePath);
+  let stat = null, raw = null;
+  if (exists) {
+    try {
+      stat = fs.statSync(filePath);
+      raw = fs.readFileSync(filePath, "utf8");
+    } catch (e) {}
+  }
+  res.json({
+    merchantId: mid,
+    filePath,
+    exists,
+    size: stat?.size || 0,
+    modifiedAt: stat?.mtime || null,
+    dataDirExists: fs.existsSync(path.join(__dirname, "data")),
+    contents: raw ? JSON.parse(raw) : null,
+  });
+});
 
 app.get("/api/merchant-products", (req, res) =>
   getMerchantData(req, res, "https://api.salla.dev/admin/v2/products?per_page=100")
