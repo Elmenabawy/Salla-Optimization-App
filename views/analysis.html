@@ -373,6 +373,144 @@
     </div>
   </div>
 
+  <!-- Social Proof -->
+  <div class="glass rounded-2xl p-6">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <h2 class="text-xl font-bold text-white mb-1">📣 إشعارات الإثبات الاجتماعي</h2>
+        <p class="text-sm text-slate-400">إشعارات صغيرة في زاوية المتجر ("5 أشخاص اشتروا هذا المنتج")</p>
+      </div>
+      <label class="f-switch"><input type="checkbox" id="f-sp-enabled"><span class="f-slider"></span></label>
+    </div>
+    <div class="grid md:grid-cols-2 gap-3">
+      <div class="md:col-span-2"><label class="f-label">الرسائل (سطر لكل رسالة)</label><textarea id="f-sp-messages" class="f-input" rows="3" style="resize:vertical;font-family:inherit"></textarea></div>
+      <div><label class="f-label">الموقع</label><select id="f-sp-position" class="f-input"><option value="bottom-left">يسار الأسفل</option><option value="bottom-right">يمين الأسفل</option></select></div>
+      <div><label class="f-label">المدة بين الرسائل (ms)</label><input id="f-sp-rotate" type="number" min="2000" step="500" class="f-input"></div>
+      <div><label class="f-label">لون الخلفية</label><input id="f-sp-bg" type="color" class="f-input" style="height:38px;padding:2px"></div>
+      <div><label class="f-label">لون النص</label><input id="f-sp-text-color" type="color" class="f-input" style="height:38px;padding:2px"></div>
+      <div><label class="f-label">لون النقطة</label><input id="f-sp-accent" type="color" class="f-input" style="height:38px;padding:2px"></div>
+    </div>
+  </div>
+
+  <!-- Stock Urgency -->
+  <div class="glass rounded-2xl p-6">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <h2 class="text-xl font-bold text-white mb-1">⚡ تنبيه نفاد المخزون</h2>
+        <p class="text-sm text-slate-400">"لم يتبق سوى X قطعة" تحت سعر المنتج عند انخفاض الكمية</p>
+      </div>
+      <label class="f-switch"><input type="checkbox" id="f-su-enabled"><span class="f-slider"></span></label>
+    </div>
+    <div class="grid md:grid-cols-2 gap-3">
+      <div><label class="f-label">الحد الأدنى للظهور</label><input id="f-su-threshold" type="number" min="1" class="f-input"></div>
+      <div class="md:col-span-2"><label class="f-label">النص (استخدم {count})</label><input id="f-su-message" type="text" class="f-input"></div>
+      <div><label class="f-label">لون الخلفية</label><input id="f-su-bg" type="color" class="f-input" style="height:38px;padding:2px"></div>
+      <div><label class="f-label">لون النص</label><input id="f-su-text-color" type="color" class="f-input" style="height:38px;padding:2px"></div>
+    </div>
+  </div>
+
+  <!-- Trust Badges -->
+  <div class="glass rounded-2xl p-6">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <h2 class="text-xl font-bold text-white mb-1">🛡️ شارات الثقة</h2>
+        <p class="text-sm text-slate-400">أيقونات الضمانات على صفحة المنتج</p>
+      </div>
+      <label class="f-switch"><input type="checkbox" id="f-tb-enabled"><span class="f-slider"></span></label>
+    </div>
+    <div class="grid md:grid-cols-2 gap-3">
+      <div class="md:col-span-2"><label class="f-label">الشارات (سطر لكل واحدة: أيقونة | نص)</label><textarea id="f-tb-items" class="f-input" rows="4" style="resize:vertical;font-family:inherit" placeholder="🚚 | شحن مجاني&#10;🔒 | دفع آمن"></textarea></div>
+      <div><label class="f-label">الموضع</label><select id="f-tb-placement" class="f-input"><option value="below-cart">تحت زر "أضف للسلة"</option><option value="above-cart">فوق زر "أضف للسلة"</option></select></div>
+      <div></div>
+      <div><label class="f-label">لون الخلفية</label><input id="f-tb-bg" type="color" class="f-input" style="height:38px;padding:2px"></div>
+      <div><label class="f-label">لون النص</label><input id="f-tb-text-color" type="color" class="f-input" style="height:38px;padding:2px"></div>
+    </div>
+  </div>
+
+  <!-- Recently Viewed -->
+  <div class="glass rounded-2xl p-6">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <h2 class="text-xl font-bold text-white mb-1">🕘 شاهدت مؤخراً</h2>
+        <p class="text-sm text-slate-400">شبكة المنتجات التي شاهدها العميل في أسفل أي صفحة</p>
+      </div>
+      <label class="f-switch"><input type="checkbox" id="f-rv-enabled"><span class="f-slider"></span></label>
+    </div>
+    <div class="grid md:grid-cols-2 gap-3">
+      <div class="md:col-span-2"><label class="f-label">العنوان</label><input id="f-rv-title" type="text" class="f-input"></div>
+      <div><label class="f-label">عدد المنتجات</label><input id="f-rv-max" type="number" min="2" max="12" class="f-input"></div>
+      <div><label class="f-label">لون الخلفية</label><input id="f-rv-bg" type="color" class="f-input" style="height:38px;padding:2px"></div>
+    </div>
+  </div>
+
+  <!-- Exit Intent -->
+  <div class="glass rounded-2xl p-6">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <h2 class="text-xl font-bold text-white mb-1">🚪 إعلان الخروج</h2>
+        <p class="text-sm text-slate-400">نافذة تظهر عند محاولة إغلاق الموقع</p>
+      </div>
+      <label class="f-switch"><input type="checkbox" id="f-ei-enabled"><span class="f-slider"></span></label>
+    </div>
+    <div class="grid md:grid-cols-2 gap-3">
+      <div class="md:col-span-2"><label class="f-label">العنوان</label><input id="f-ei-title" type="text" class="f-input"></div>
+      <div class="md:col-span-2"><label class="f-label">الرسالة</label><input id="f-ei-message" type="text" class="f-input"></div>
+      <div><label class="f-label">نص الزر</label><input id="f-ei-btn-text" type="text" class="f-input"></div>
+      <div><label class="f-label">رابط الزر</label><input id="f-ei-btn-url" type="text" class="f-input"></div>
+      <div><label class="f-label">تكرار الظهور</label><select id="f-ei-once" class="f-input"><option value="session">مرة في كل جلسة</option><option value="day">مرة كل يوم</option><option value="always">دائماً</option></select></div>
+      <div></div>
+      <div><label class="f-label">لون الزر</label><input id="f-ei-bg" type="color" class="f-input" style="height:38px;padding:2px"></div>
+      <div><label class="f-label">لون نص الزر</label><input id="f-ei-text-color" type="color" class="f-input" style="height:38px;padding:2px"></div>
+    </div>
+  </div>
+
+  <!-- Custom Popup -->
+  <div class="glass rounded-2xl p-6">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <h2 class="text-xl font-bold text-white mb-1">🎁 نافذة مخصصة</h2>
+        <p class="text-sm text-slate-400">نافذة قابلة للتخصيص مع استهداف منتجات أو تصنيفات محددة</p>
+      </div>
+      <label class="f-switch"><input type="checkbox" id="f-cp-enabled"><span class="f-slider"></span></label>
+    </div>
+    <div class="grid md:grid-cols-2 gap-3">
+      <div class="md:col-span-2"><label class="f-label">العنوان</label><input id="f-cp-title" type="text" class="f-input"></div>
+      <div class="md:col-span-2"><label class="f-label">النص</label><input id="f-cp-body" type="text" class="f-input"></div>
+      <div class="md:col-span-2"><label class="f-label">رابط صورة (اختياري)</label><input id="f-cp-image" type="text" class="f-input" placeholder="https://..."></div>
+      <div><label class="f-label">نص الزر</label><input id="f-cp-btn-text" type="text" class="f-input"></div>
+      <div><label class="f-label">رابط الزر</label><input id="f-cp-btn-url" type="text" class="f-input"></div>
+      <div><label class="f-label">متى تظهر؟</label><select id="f-cp-trigger" class="f-input"><option value="pageload">عند تحميل الصفحة</option><option value="delay">بعد تأخير</option><option value="scroll">عند التمرير %</option><option value="exit">عند محاولة الخروج</option></select></div>
+      <div><label class="f-label">قيمة المؤقت (ثوان أو %)</label><input id="f-cp-trigger-value" type="number" min="1" class="f-input"></div>
+      <div class="md:col-span-2 border-t border-slate-700 pt-3 mt-2">
+        <label class="f-label">📍 استهداف الصفحات</label>
+        <select id="f-cp-targeting" class="f-input" onchange="onMainTargetingChange(this.value)">
+          <option value="all">جميع صفحات المتجر</option>
+          <option value="product">جميع صفحات المنتجات</option>
+          <option value="specific-product">منتج محدد</option>
+          <option value="category">تصنيف محدد</option>
+        </select>
+      </div>
+      <div class="md:col-span-2" id="f-cp-product-wrap" style="display:none">
+        <label class="f-label">اختر المنتجات</label>
+        <div id="f-cp-product-loading" class="text-xs text-slate-400">⏳ جاري تحميل منتجاتك...</div>
+        <select id="f-cp-product-select" class="f-input" multiple size="6" style="display:none;height:auto;min-height:120px"></select>
+        <p class="text-xs text-slate-400 mt-1">Ctrl + click للاختيار المتعدد</p>
+      </div>
+      <div class="md:col-span-2" id="f-cp-category-wrap" style="display:none">
+        <label class="f-label">اختر التصنيفات</label>
+        <div id="f-cp-category-loading" class="text-xs text-slate-400">⏳ جاري تحميل التصنيفات...</div>
+        <select id="f-cp-category-select" class="f-input" multiple size="6" style="display:none;height:auto;min-height:120px"></select>
+        <p class="text-xs text-slate-400 mt-1">Ctrl + click للاختيار المتعدد</p>
+      </div>
+      <input id="f-cp-target-ids" type="hidden" value="">
+      <div><label class="f-label">تكرار الظهور</label><select id="f-cp-once" class="f-input"><option value="session">مرة في كل جلسة</option><option value="day">مرة كل يوم</option><option value="always">دائماً</option></select></div>
+      <div></div>
+      <div><label class="f-label">لون الخلفية</label><input id="f-cp-bg" type="color" class="f-input" style="height:38px;padding:2px"></div>
+      <div><label class="f-label">لون النص</label><input id="f-cp-text-color" type="color" class="f-input" style="height:38px;padding:2px"></div>
+      <div><label class="f-label">لون الزر</label><input id="f-cp-accent" type="color" class="f-input" style="height:38px;padding:2px"></div>
+    </div>
+  </div>
+
   <div id="f-status" class="text-sm text-slate-400 text-center"></div>
   <button id="f-save" class="grad-bg text-white w-full py-3 rounded-xl font-bold shadow-glow">💾 حفظ الإعدادات</button>
 
@@ -438,7 +576,123 @@ function showTab(e, name) {
       $('f-timer-bg2').value = s.productTimer.bgColor2 || '#f97316';
       $('f-timer-text-color').value = s.productTimer.textColor || '#FFFFFF';
     }
+    if (s.socialProof) {
+      $('f-sp-enabled').checked = !!s.socialProof.enabled;
+      $('f-sp-messages').value = (s.socialProof.messages || []).join('\n');
+      $('f-sp-position').value = s.socialProof.position || 'bottom-left';
+      $('f-sp-rotate').value = s.socialProof.rotateEvery || 7000;
+      $('f-sp-bg').value = s.socialProof.bgColor || '#FFFFFF';
+      $('f-sp-text-color').value = s.socialProof.textColor || '#0f172a';
+      $('f-sp-accent').value = s.socialProof.accentColor || '#10b981';
+    }
+    if (s.stockUrgency) {
+      $('f-su-enabled').checked = !!s.stockUrgency.enabled;
+      $('f-su-threshold').value = s.stockUrgency.threshold || 5;
+      $('f-su-message').value = s.stockUrgency.message || '';
+      $('f-su-bg').value = s.stockUrgency.bgColor || '#fef3c7';
+      $('f-su-text-color').value = s.stockUrgency.textColor || '#92400e';
+    }
+    if (s.trustBadges) {
+      $('f-tb-enabled').checked = !!s.trustBadges.enabled;
+      $('f-tb-items').value = (s.trustBadges.items || []).map(function (it) { return (it.icon || '') + ' | ' + (it.text || ''); }).join('\n');
+      $('f-tb-placement').value = s.trustBadges.placement || 'below-cart';
+      $('f-tb-bg').value = s.trustBadges.bgColor || '#f1f5f9';
+      $('f-tb-text-color').value = s.trustBadges.textColor || '#0f172a';
+    }
+    if (s.recentlyViewed) {
+      $('f-rv-enabled').checked = !!s.recentlyViewed.enabled;
+      $('f-rv-title').value = s.recentlyViewed.title || '';
+      $('f-rv-max').value = s.recentlyViewed.maxItems || 8;
+      $('f-rv-bg').value = s.recentlyViewed.bgColor || '#f8fafc';
+    }
+    if (s.exitIntent) {
+      $('f-ei-enabled').checked = !!s.exitIntent.enabled;
+      $('f-ei-title').value = s.exitIntent.title || '';
+      $('f-ei-message').value = s.exitIntent.message || '';
+      $('f-ei-btn-text').value = s.exitIntent.buttonText || '';
+      $('f-ei-btn-url').value = s.exitIntent.buttonUrl || '';
+      $('f-ei-once').value = s.exitIntent.showOnce || 'session';
+      $('f-ei-bg').value = s.exitIntent.bgColor || '#0d9488';
+      $('f-ei-text-color').value = s.exitIntent.textColor || '#FFFFFF';
+    }
+    if (s.customPopup) {
+      $('f-cp-enabled').checked = !!s.customPopup.enabled;
+      $('f-cp-title').value = s.customPopup.title || '';
+      $('f-cp-body').value = s.customPopup.body || '';
+      $('f-cp-image').value = s.customPopup.imageUrl || '';
+      $('f-cp-btn-text').value = s.customPopup.buttonText || '';
+      $('f-cp-btn-url').value = s.customPopup.buttonUrl || '';
+      $('f-cp-trigger').value = s.customPopup.trigger || 'delay';
+      $('f-cp-trigger-value').value = s.customPopup.triggerValue || 5;
+      $('f-cp-targeting').value = s.customPopup.targeting || 'all';
+      $('f-cp-target-ids').value = s.customPopup.targetIds || '';
+      $('f-cp-once').value = s.customPopup.showOnce || 'session';
+      $('f-cp-bg').value = s.customPopup.bgColor || '#FFFFFF';
+      $('f-cp-text-color').value = s.customPopup.textColor || '#0f172a';
+      $('f-cp-accent').value = s.customPopup.accentColor || '#0d9488';
+      onMainTargetingChange(s.customPopup.targeting || 'all', s.customPopup.targetIds || '');
+    }
   });
+
+  // Targeting dropdowns with real merchant data
+  var _mainProductsCache = null;
+  var _mainCategoriesCache = null;
+
+  function onMainTargetingChange(val, preselected) {
+    $('f-cp-product-wrap').style.display = val === 'specific-product' ? '' : 'none';
+    $('f-cp-category-wrap').style.display = val === 'category' ? '' : 'none';
+    if (val === 'specific-product') loadMainProducts(preselected);
+    if (val === 'category') loadMainCategories(preselected);
+  }
+  window.onMainTargetingChange = onMainTargetingChange;
+
+  function syncMainSelect(selectId) {
+    var sel = $(selectId);
+    var ids = Array.from(sel.selectedOptions).map(function (o) { return o.value; });
+    $('f-cp-target-ids').value = ids.join(',');
+  }
+
+  function renderMainOptions(selectId, loadingId, list, preselected) {
+    var sel = $(selectId);
+    var lod = $(loadingId);
+    sel.innerHTML = '';
+    if (!list.length) { lod.textContent = 'لا توجد بيانات'; return; }
+    list.forEach(function (item) {
+      var opt = document.createElement('option');
+      opt.value = item.id;
+      opt.textContent = item.name;
+      sel.appendChild(opt);
+    });
+    var ids = (preselected || '').split(',').map(function (s) { return s.trim(); });
+    Array.from(sel.options).forEach(function (opt) { opt.selected = ids.indexOf(opt.value) !== -1; });
+    lod.style.display = 'none';
+    sel.style.display = '';
+    sel.addEventListener('change', function () { syncMainSelect(selectId); });
+    syncMainSelect(selectId);
+  }
+
+  function loadMainProducts(preselected) {
+    if (_mainProductsCache) { renderMainOptions('f-cp-product-select', 'f-cp-product-loading', _mainProductsCache, preselected); return; }
+    fetch('/api/my-merchant-products')
+      .then(function (r) { return r.json(); })
+      .then(function (json) {
+        var list = (json.data || json || []).map(function (p) { return { id: String(p.id), name: p.name || ('منتج #' + p.id) }; });
+        _mainProductsCache = list;
+        renderMainOptions('f-cp-product-select', 'f-cp-product-loading', list, preselected);
+      })
+      .catch(function () { $('f-cp-product-loading').textContent = '❌ تعذّر تحميل المنتجات'; });
+  }
+  function loadMainCategories(preselected) {
+    if (_mainCategoriesCache) { renderMainOptions('f-cp-category-select', 'f-cp-category-loading', _mainCategoriesCache, preselected); return; }
+    fetch('/api/my-merchant-categories')
+      .then(function (r) { return r.json(); })
+      .then(function (json) {
+        var list = (json.data || json || []).map(function (c) { return { id: String(c.id), name: c.name || ('تصنيف #' + c.id) }; });
+        _mainCategoriesCache = list;
+        renderMainOptions('f-cp-category-select', 'f-cp-category-loading', list, preselected);
+      })
+      .catch(function () { $('f-cp-category-loading').textContent = '❌ تعذّر تحميل التصنيفات'; });
+  }
 
   $('f-save').addEventListener('click', function () {
     var status = $('f-status');
@@ -448,6 +702,12 @@ function showTab(e, name) {
       freeShippingBar: { enabled: $('f-ship-enabled').checked, threshold: parseInt($('f-ship-threshold').value, 10) || 0, currency: $('f-ship-currency').value.trim(), text: $('f-ship-text').value.trim(), bgColor: $('f-ship-bg').value, bgColor2: $('f-ship-bg2').value, textColor: $('f-ship-text-color').value },
       stickyCart: { enabled: $('f-cart-enabled').checked, text: $('f-cart-text').value.trim(), position: $('f-cart-position').value, bgColor: $('f-cart-bg').value, textColor: $('f-cart-text-color').value },
       productTimer: { enabled: $('f-timer-enabled').checked, mode: $('f-timer-mode').value, endDate: $('f-timer-end').value, title: $('f-timer-title').value.trim(), placement: $('f-timer-placement').value, bgColor: $('f-timer-bg').value, bgColor2: $('f-timer-bg2').value, textColor: $('f-timer-text-color').value },
+      socialProof: { enabled: $('f-sp-enabled').checked, messages: $('f-sp-messages').value.split('\n').map(function (l) { return l.trim(); }).filter(Boolean), position: $('f-sp-position').value, rotateEvery: parseInt($('f-sp-rotate').value, 10) || 7000, bgColor: $('f-sp-bg').value, textColor: $('f-sp-text-color').value, accentColor: $('f-sp-accent').value },
+      stockUrgency: { enabled: $('f-su-enabled').checked, threshold: parseInt($('f-su-threshold').value, 10) || 5, message: $('f-su-message').value.trim(), bgColor: $('f-su-bg').value, textColor: $('f-su-text-color').value },
+      trustBadges: { enabled: $('f-tb-enabled').checked, items: $('f-tb-items').value.split('\n').map(function (line) { var p = line.split('|').map(function (x) { return x.trim(); }); return p[0] || p[1] ? { icon: p[0] || '', text: p[1] || '' } : null; }).filter(Boolean), placement: $('f-tb-placement').value, bgColor: $('f-tb-bg').value, textColor: $('f-tb-text-color').value },
+      recentlyViewed: { enabled: $('f-rv-enabled').checked, title: $('f-rv-title').value.trim(), maxItems: parseInt($('f-rv-max').value, 10) || 8, bgColor: $('f-rv-bg').value },
+      exitIntent: { enabled: $('f-ei-enabled').checked, title: $('f-ei-title').value.trim(), message: $('f-ei-message').value.trim(), buttonText: $('f-ei-btn-text').value.trim(), buttonUrl: $('f-ei-btn-url').value.trim(), showOnce: $('f-ei-once').value, bgColor: $('f-ei-bg').value, textColor: $('f-ei-text-color').value },
+      customPopup: { enabled: $('f-cp-enabled').checked, title: $('f-cp-title').value.trim(), body: $('f-cp-body').value.trim(), imageUrl: $('f-cp-image').value.trim(), buttonText: $('f-cp-btn-text').value.trim(), buttonUrl: $('f-cp-btn-url').value.trim(), trigger: $('f-cp-trigger').value, triggerValue: parseInt($('f-cp-trigger-value').value, 10) || 5, targeting: $('f-cp-targeting').value, targetIds: $('f-cp-target-ids').value.trim(), showOnce: $('f-cp-once').value, bgColor: $('f-cp-bg').value, textColor: $('f-cp-text-color').value, accentColor: $('f-cp-accent').value },
     };
     fetch('/api/my-settings', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
       .then(r => r.json())

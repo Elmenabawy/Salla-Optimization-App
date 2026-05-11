@@ -539,6 +539,29 @@ app.post("/api/my-settings", ensureAuthenticated, function (req, res) {
   res.json({ ok: true, settings: saved });
 });
 
+// Session-authenticated counterparts for the main-site analysis page
+async function getMyMerchantData(req, res, sallaUrl) {
+  const merchantId = req.user?.merchant?.id;
+  if (!merchantId) return res.status(401).json({ data: [] });
+  const accessToken = await getAccessTokenForMerchant(merchantId) || SallaAPI.getToken();
+  if (!accessToken) return res.json({ data: [] });
+  try {
+    const data = await SallaAPI.fetchResource({ url: sallaUrl, token: accessToken });
+    res.json(data || { data: [] });
+  } catch (err) {
+    console.error("[API] getMyMerchantData failed:", err.message);
+    res.json({ data: [] });
+  }
+}
+
+app.get("/api/my-merchant-products", ensureAuthenticated, (req, res) =>
+  getMyMerchantData(req, res, "https://api.salla.dev/admin/v2/products?per_page=100")
+);
+
+app.get("/api/my-merchant-categories", ensureAuthenticated, (req, res) =>
+  getMyMerchantData(req, res, "https://api.salla.dev/admin/v2/categories?per_page=100")
+);
+
 // GET /analysis/refresh
 // Re-run the analysis synchronously, then redirect back to /analysis
 app.get("/analysis/refresh", ensureAuthenticated, async function (req, res) {
