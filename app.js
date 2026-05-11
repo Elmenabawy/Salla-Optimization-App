@@ -77,17 +77,22 @@ async function persistMerchantAndAnalyze(merchantId, data) {
 }
 
 // app.store.authorize fires after a merchant authorizes the app (Easy Mode delivers the token here)
-SallaWebhook.on("app.store.authorize", async (eventBody) => {
-  console.log("[Webhook] app.store.authorize received");
+SallaWebhook.on("app.store.authorize", (eventBody) => {
+  console.log("[Webhook] app.store.authorize received for merchant", eventBody?.merchant);
   const merchantId = eventBody?.merchant || eventBody?.data?.merchant?.id;
-  await persistMerchantAndAnalyze(merchantId, eventBody?.data || {});
+  // Fire-and-forget — Salla already got its 200 response
+  persistMerchantAndAnalyze(merchantId, eventBody?.data || {}).catch((err) =>
+    console.error("[Webhook] persist failed:", err.message)
+  );
 });
 
 // app.installed fires once when the merchant first installs the app
-SallaWebhook.on("app.installed", async (eventBody) => {
-  console.log("[Webhook] app.installed received");
+SallaWebhook.on("app.installed", (eventBody) => {
+  console.log("[Webhook] app.installed received for merchant", eventBody?.merchant);
   const merchantId = eventBody?.merchant || eventBody?.data?.merchant?.id;
-  await persistMerchantAndAnalyze(merchantId, eventBody?.data || {});
+  persistMerchantAndAnalyze(merchantId, eventBody?.data || {}).catch((err) =>
+    console.error("[Webhook] persist failed:", err.message)
+  );
 });
 
 SallaWebhook.on("all", (eventBody) => {
@@ -193,10 +198,18 @@ app.use(bodyParser.json());
 // directly, pass the access token explicitly.
 
 // POST /webhook
+// Salla times out webhook deliveries after 60 seconds. We MUST respond
+// immediately, then process the event in the background. Otherwise every
+// install/event fails with cURL error 28.
 app.post("/webhook", function (req, res) {
-  SallaWebhook.checkActions(req.body, req.headers.authorization, {
-    /* your args to pass to action files or listeners */
-  });
+  // Respond first so Salla marks the delivery as successful
+  res.status(200).json({ ok: true });
+  // Then process the webhook (handlers may do DB writes + API calls)
+  try {
+    SallaWebhook.checkActions(req.body, req.headers.authorization, {});
+  } catch (err) {
+    console.error("[Webhook] processing error:", err.message);
+  }
 });
 
 // GET /oauth/redirect
