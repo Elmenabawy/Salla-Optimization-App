@@ -31,7 +31,7 @@
     "mongoose": "8.16.0",
     "mysql2": "3.22.1",
     "nunjucks": "^3.2.4",
-    "passport": "~0.6.0",
+    "passport": "~0.7.0",
     "sequelize": "6.37.8",
     "sqlite3": "^5.1.7",
     "typeorm": "0.3.22",
