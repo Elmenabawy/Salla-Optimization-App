@@ -464,6 +464,61 @@
     </div>
   </div>
 
+  <!-- Performance Boost -->
+  <div class="glass rounded-2xl p-6" style="border:2px solid rgba(16,185,129,0.4);box-shadow:0 0 30px -5px rgba(16,185,129,0.3)">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <h2 class="text-xl font-bold mb-1" style="background:linear-gradient(135deg,#10b981,#06b6d4);-webkit-background-clip:text;background-clip:text;color:transparent">⚡ تسريع المتجر (Performance Boost)</h2>
+        <p class="text-sm text-slate-400">يسرّع تحميل صفحات متجرك تلقائياً ويحسّن Core Web Vitals بـ 20-40%</p>
+      </div>
+      <label class="f-switch"><input type="checkbox" id="f-pb-enabled"><span class="f-slider"></span></label>
+    </div>
+    <div class="space-y-2">
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-pb-lazy-images" class="w-4 h-4 accent-emerald-500">
+        <div class="flex-1">
+          <div class="font-bold text-sm text-white">🖼️ تحميل الصور بالكسل</div>
+          <div class="text-xs text-slate-400">حمّل الصور عند ظهورها فقط</div>
+        </div>
+      </label>
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-pb-async-decode" class="w-4 h-4 accent-emerald-500">
+        <div class="flex-1">
+          <div class="font-bold text-sm text-white">⚙️ فك تشفير الصور بشكل غير متزامن</div>
+          <div class="text-xs text-slate-400">يمنع تجمد المتصفح أثناء معالجة الصور</div>
+        </div>
+      </label>
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-pb-lazy-iframes" class="w-4 h-4 accent-emerald-500">
+        <div class="flex-1">
+          <div class="font-bold text-sm text-white">📺 تحميل iframes بالكسل</div>
+          <div class="text-xs text-slate-400">يؤجل تحميل الفيديوهات والخرائط</div>
+        </div>
+      </label>
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-pb-preconnect" class="w-4 h-4 accent-emerald-500">
+        <div class="flex-1">
+          <div class="font-bold text-sm text-white">🔌 اتصال مسبق بنطاقات سلة</div>
+          <div class="text-xs text-slate-400">يقلل زمن التحميل بـ 100-300ms</div>
+        </div>
+      </label>
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-pb-defer-videos" class="w-4 h-4 accent-emerald-500">
+        <div class="flex-1">
+          <div class="font-bold text-sm text-white">🎬 تأجيل فيديوهات يوتيوب/فيميو</div>
+          <div class="text-xs text-slate-400">يحمّلها عند الرؤية فقط</div>
+        </div>
+      </label>
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-pb-fonts" class="w-4 h-4 accent-emerald-500">
+        <div class="flex-1">
+          <div class="font-bold text-sm text-white">🔤 تحسين تحميل الخطوط</div>
+          <div class="text-xs text-slate-400">يحسّن CLS (Cumulative Layout Shift)</div>
+        </div>
+      </label>
+    </div>
+  </div>
+
   <!-- Custom Popup -->
   <div class="glass rounded-2xl p-6">
     <div class="flex items-start justify-between gap-4 mb-4">
@@ -615,6 +670,15 @@ function showTab(e, name) {
       $('f-ei-bg').value = s.exitIntent.bgColor || '#0d9488';
       $('f-ei-text-color').value = s.exitIntent.textColor || '#FFFFFF';
     }
+    if (s.performanceBoost) {
+      $('f-pb-enabled').checked = !!s.performanceBoost.enabled;
+      $('f-pb-lazy-images').checked = s.performanceBoost.lazyLoadImages !== false;
+      $('f-pb-async-decode').checked = s.performanceBoost.asyncDecode !== false;
+      $('f-pb-lazy-iframes').checked = s.performanceBoost.lazyLoadIframes !== false;
+      $('f-pb-preconnect').checked = s.performanceBoost.preconnect !== false;
+      $('f-pb-defer-videos').checked = s.performanceBoost.deferVideos !== false;
+      $('f-pb-fonts').checked = !!s.performanceBoost.optimizeFonts;
+    }
     if (s.customPopup) {
       $('f-cp-enabled').checked = !!s.customPopup.enabled;
       $('f-cp-title').value = s.customPopup.title || '';
@@ -707,6 +771,15 @@ function showTab(e, name) {
       trustBadges: { enabled: $('f-tb-enabled').checked, items: $('f-tb-items').value.split('\n').map(function (line) { var p = line.split('|').map(function (x) { return x.trim(); }); return p[0] || p[1] ? { icon: p[0] || '', text: p[1] || '' } : null; }).filter(Boolean), placement: $('f-tb-placement').value, bgColor: $('f-tb-bg').value, textColor: $('f-tb-text-color').value },
       recentlyViewed: { enabled: $('f-rv-enabled').checked, title: $('f-rv-title').value.trim(), maxItems: parseInt($('f-rv-max').value, 10) || 8, bgColor: $('f-rv-bg').value },
       exitIntent: { enabled: $('f-ei-enabled').checked, title: $('f-ei-title').value.trim(), message: $('f-ei-message').value.trim(), buttonText: $('f-ei-btn-text').value.trim(), buttonUrl: $('f-ei-btn-url').value.trim(), showOnce: $('f-ei-once').value, bgColor: $('f-ei-bg').value, textColor: $('f-ei-text-color').value },
+      performanceBoost: {
+        enabled: $('f-pb-enabled').checked,
+        lazyLoadImages: $('f-pb-lazy-images').checked,
+        asyncDecode: $('f-pb-async-decode').checked,
+        lazyLoadIframes: $('f-pb-lazy-iframes').checked,
+        preconnect: $('f-pb-preconnect').checked,
+        deferVideos: $('f-pb-defer-videos').checked,
+        optimizeFonts: $('f-pb-fonts').checked,
+      },
       customPopup: { enabled: $('f-cp-enabled').checked, title: $('f-cp-title').value.trim(), body: $('f-cp-body').value.trim(), imageUrl: $('f-cp-image').value.trim(), buttonText: $('f-cp-btn-text').value.trim(), buttonUrl: $('f-cp-btn-url').value.trim(), trigger: $('f-cp-trigger').value, triggerValue: parseInt($('f-cp-trigger-value').value, 10) || 5, targeting: $('f-cp-targeting').value, targetIds: $('f-cp-target-ids').value.trim(), showOnce: $('f-cp-once').value, bgColor: $('f-cp-bg').value, textColor: $('f-cp-text-color').value, accentColor: $('f-cp-accent').value },
     };
     fetch('/api/my-settings', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })

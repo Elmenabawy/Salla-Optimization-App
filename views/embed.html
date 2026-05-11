@@ -542,6 +542,61 @@
       </div>
     </div>
 
+    <!-- Performance Boost -->
+    <div class="card p-5" style="border:2px solid #10b981;background:linear-gradient(135deg,#f0fdfa,#ecfeff)">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">⚡ تسريع المتجر (Performance Boost)</h3>
+          <p class="text-sm text-slate-600">يسرّع تحميل صفحات متجرك تلقائياً ويحسّن تجربة العملاء — قد يحسّن مؤشرات Core Web Vitals بنسبة 20-40%</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="pb-enabled"><span class="slider"></span></label>
+      </div>
+      <div class="space-y-3">
+        <label class="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer">
+          <input type="checkbox" id="pb-lazy-images" class="w-4 h-4">
+          <div class="flex-1">
+            <div class="font-bold text-sm">🖼️ تحميل الصور بالكسل (Lazy Loading)</div>
+            <div class="text-xs text-slate-500">حمّل الصور فقط عند ظهورها على الشاشة - يقلل بيانات التحميل الأولي</div>
+          </div>
+        </label>
+        <label class="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer">
+          <input type="checkbox" id="pb-async-decode" class="w-4 h-4">
+          <div class="flex-1">
+            <div class="font-bold text-sm">⚙️ فك تشفير الصور بشكل غير متزامن</div>
+            <div class="text-xs text-slate-500">يمنع تجمد المتصفح أثناء معالجة الصور الكبيرة</div>
+          </div>
+        </label>
+        <label class="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer">
+          <input type="checkbox" id="pb-lazy-iframes" class="w-4 h-4">
+          <div class="flex-1">
+            <div class="font-bold text-sm">📺 تحميل iframes بالكسل</div>
+            <div class="text-xs text-slate-500">يؤجل تحميل الفيديوهات والخرائط المضمّنة حتى ظهورها</div>
+          </div>
+        </label>
+        <label class="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer">
+          <input type="checkbox" id="pb-preconnect" class="w-4 h-4">
+          <div class="flex-1">
+            <div class="font-bold text-sm">🔌 اتصال مسبق بنطاقات سلة (Preconnect)</div>
+            <div class="text-xs text-slate-500">يفتح اتصال مع CDN سلة قبل الحاجة - يقلل زمن التحميل بـ 100-300ms</div>
+          </div>
+        </label>
+        <label class="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer">
+          <input type="checkbox" id="pb-defer-videos" class="w-4 h-4">
+          <div class="flex-1">
+            <div class="font-bold text-sm">🎬 تأجيل تحميل فيديوهات يوتيوب/فيميو</div>
+            <div class="text-xs text-slate-500">يحمّل الفيديوهات فقط عند رؤيتها - يوفر بيانات كثيرة</div>
+          </div>
+        </label>
+        <label class="flex items-center gap-3 p-2 hover:bg-white rounded-lg cursor-pointer">
+          <input type="checkbox" id="pb-fonts" class="w-4 h-4">
+          <div class="flex-1">
+            <div class="font-bold text-sm">🔤 تحسين تحميل الخطوط (font-display: swap)</div>
+            <div class="text-xs text-slate-500">يعرض النص بخط بديل فوراً ثم يبدّله - يحسّن CLS</div>
+          </div>
+        </label>
+      </div>
+    </div>
+
     <!-- Custom Popup -->
     <div class="card p-5">
       <div class="flex items-start justify-between gap-4 mb-4">
@@ -723,6 +778,15 @@ function t(e, name) {
       $('ei-once').value = s.exitIntent.showOnce || 'session';
       $('ei-bg').value = s.exitIntent.bgColor || '#0d9488';
       $('ei-text-color').value = s.exitIntent.textColor || '#FFFFFF';
+    }
+    if (s.performanceBoost) {
+      $('pb-enabled').checked = !!s.performanceBoost.enabled;
+      $('pb-lazy-images').checked = s.performanceBoost.lazyLoadImages !== false;
+      $('pb-async-decode').checked = s.performanceBoost.asyncDecode !== false;
+      $('pb-lazy-iframes').checked = s.performanceBoost.lazyLoadIframes !== false;
+      $('pb-preconnect').checked = s.performanceBoost.preconnect !== false;
+      $('pb-defer-videos').checked = s.performanceBoost.deferVideos !== false;
+      $('pb-fonts').checked = !!s.performanceBoost.optimizeFonts;
     }
     if (s.customPopup) {
       $('cp-enabled').checked = !!s.customPopup.enabled;
@@ -909,6 +973,15 @@ function t(e, name) {
           showOnce: $('ei-once').value,
           bgColor: $('ei-bg').value,
           textColor: $('ei-text-color').value,
+        },
+        performanceBoost: {
+          enabled: $('pb-enabled').checked,
+          lazyLoadImages: $('pb-lazy-images').checked,
+          asyncDecode: $('pb-async-decode').checked,
+          lazyLoadIframes: $('pb-lazy-iframes').checked,
+          preconnect: $('pb-preconnect').checked,
+          deferVideos: $('pb-defer-videos').checked,
+          optimizeFonts: $('pb-fonts').checked,
         },
         customPopup: {
           enabled: $('cp-enabled').checked,

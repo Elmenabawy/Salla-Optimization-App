@@ -614,10 +614,108 @@
     }
   }
 
+  // ---- Performance Booster ----
+  // Runs FIRST (before everything else) so images that exist on initial
+  // paint get lazy-loaded before they fetch. Then a MutationObserver
+  // keeps applying optimizations to dynamically added content.
+  function applyPerformanceBoost(opts) {
+    if (!opts.enabled) return;
+
+    function tagImage(img) {
+      if (opts.lazyLoadImages && !img.hasAttribute("loading")) {
+        // Don't lazy-load images already in the viewport (avoid hurting LCP)
+        var rect = img.getBoundingClientRect();
+        var inView = rect.top < window.innerHeight && rect.bottom > 0;
+        img.setAttribute("loading", inView ? "eager" : "lazy");
+      }
+      if (opts.asyncDecode && !img.hasAttribute("decoding")) {
+        img.setAttribute("decoding", "async");
+      }
+    }
+
+    function tagIframe(f) {
+      if (opts.lazyLoadIframes && !f.hasAttribute("loading")) {
+        f.setAttribute("loading", "lazy");
+      }
+      if (opts.deferVideos) {
+        // YouTube/Vimeo lazy-load: defer src until in viewport
+        var src = f.getAttribute("src") || "";
+        if (/(youtube|vimeo)\.com/.test(src) && !f.dataset.alfaDeferred) {
+          f.dataset.alfaSrc = src;
+          f.dataset.alfaDeferred = "1";
+          f.removeAttribute("src");
+          var io = new IntersectionObserver(function (entries) {
+            entries.forEach(function (e) {
+              if (e.isIntersecting) {
+                e.target.setAttribute("src", e.target.dataset.alfaSrc);
+                io.unobserve(e.target);
+              }
+            });
+          });
+          io.observe(f);
+        }
+      }
+    }
+
+    function applyAll() {
+      document.querySelectorAll("img").forEach(tagImage);
+      document.querySelectorAll("iframe").forEach(tagIframe);
+    }
+
+    function addPreconnects() {
+      if (!opts.preconnect) return;
+      var domains = [
+        "https://fonts.googleapis.com",
+        "https://fonts.gstatic.com",
+        "https://cdn.salla.network",
+        "https://cdn.assets.salla.network",
+        "https://api.salla.dev",
+      ];
+      domains.forEach(function (d) {
+        if (document.querySelector('link[rel="preconnect"][href="' + d + '"]')) return;
+        var l = document.createElement("link");
+        l.rel = "preconnect";
+        l.href = d;
+        l.crossOrigin = "anonymous";
+        document.head.appendChild(l);
+      });
+    }
+
+    function optimizeFonts() {
+      if (!opts.optimizeFonts) return;
+      // Add font-display: swap to all custom @font-face declarations we own
+      document.querySelectorAll("link[rel='stylesheet']").forEach(function (link) {
+        if (/fonts\.googleapis|salla\.network/.test(link.href) && !link.href.includes("display=")) {
+          link.href = link.href + (link.href.includes("?") ? "&" : "?") + "display=swap";
+        }
+      });
+    }
+
+    addPreconnects();
+    optimizeFonts();
+    applyAll();
+
+    // Watch for dynamically added content (Salla SPA navigation, infinite scroll, etc.)
+    var observer = new MutationObserver(function (mutations) {
+      mutations.forEach(function (m) {
+        m.addedNodes.forEach(function (node) {
+          if (node.nodeType !== 1) return;
+          if (node.tagName === "IMG") tagImage(node);
+          else if (node.tagName === "IFRAME") tagIframe(node);
+          node.querySelectorAll && node.querySelectorAll("img").forEach(tagImage);
+          node.querySelectorAll && node.querySelectorAll("iframe").forEach(tagIframe);
+        });
+      });
+    });
+    observer.observe(document.body, { childList: true, subtree: true });
+  }
+
   function init() {
     fetchConfig(function (cfg) {
       if (!cfg) return;
       injectStyles();
+      // Performance boost runs FIRST so it tags existing images before they load
+      try { applyPerformanceBoost(cfg.performanceBoost || {}); } catch (e) {}
       try { renderWhatsApp(cfg.whatsapp || {}); } catch (e) {}
       try { renderShippingBar(cfg.freeShippingBar || {}); } catch (e) {}
       try { renderStickyCart(cfg.stickyCart || {}); } catch (e) {}

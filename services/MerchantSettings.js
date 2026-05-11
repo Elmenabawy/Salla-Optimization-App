@@ -89,6 +89,15 @@ const DEFAULTS = {
     bgColor: "#f1f5f9",
     textColor: "#0f172a",
   },
+  performanceBoost: {
+    enabled: false,
+    lazyLoadImages: true,
+    asyncDecode: true,
+    lazyLoadIframes: true,
+    preconnect: true,
+    deferVideos: true,
+    optimizeFonts: false,
+  },
   customPopup: {
     enabled: false,
     title: "🎁 عرض خاص لك!",
@@ -126,6 +135,7 @@ function mergeAll(raw) {
     recentlyViewed: { ...DEFAULTS.recentlyViewed, ...(raw.recentlyViewed || {}) },
     exitIntent: { ...DEFAULTS.exitIntent, ...(raw.exitIntent || {}) },
     trustBadges: { ...DEFAULTS.trustBadges, ...(raw.trustBadges || {}) },
+    performanceBoost: { ...DEFAULTS.performanceBoost, ...(raw.performanceBoost || {}) },
     customPopup: { ...DEFAULTS.customPopup, ...(raw.customPopup || {}) },
   };
 }
