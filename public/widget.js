@@ -112,9 +112,12 @@
       ".alfa-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;padding:14px;border-radius:12px;margin:14px 0;font-family:system-ui,sans-serif}" +
       ".alfa-trust-item{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:600;text-align:center;flex:1;min-width:80px}" +
       ".alfa-trust-icon{font-size:28px}" +
-      ".alfa-wheel{width:300px;height:300px;border-radius:50%;position:relative;margin:20px auto;transition:transform 4s cubic-bezier(.17,.67,.21,1.04);box-shadow:0 0 0 8px rgba(255,255,255,.2),0 10px 40px rgba(0,0,0,.3)}" +
-      ".alfa-wheel-arrow{position:absolute;top:-12px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid #1f2937;z-index:2;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}" +
-      ".alfa-wheel-slice{position:absolute;left:50%;top:0;width:50%;height:50%;transform-origin:0 100%;clip-path:polygon(0 0,100% 0,0 100%);display:flex;align-items:flex-start;justify-content:center;padding-top:30px;font-weight:900;color:#fff;font-size:14px}" +
+      ".alfa-wheel-wrap{position:relative;width:300px;height:300px;margin:20px auto}" +
+      ".alfa-wheel{width:100%;height:100%;border-radius:50%;position:relative;transition:transform 4.5s cubic-bezier(.17,.67,.21,1.04);box-shadow:0 0 0 8px rgba(255,255,255,.2),0 10px 40px rgba(0,0,0,.3);overflow:hidden}" +
+      ".alfa-wheel-arrow{position:absolute;top:-6px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:26px solid #1f2937;z-index:3;filter:drop-shadow(0 2px 4px rgba(0,0,0,.4))}" +
+      ".alfa-wheel-hub{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:54px;height:54px;background:#fff;border-radius:50%;box-shadow:inset 0 0 0 6px rgba(0,0,0,.06),0 4px 8px rgba(0,0,0,.15);display:flex;align-items:center;justify-content:center;font-size:22px;z-index:2}" +
+      ".alfa-wheel-label{position:absolute;left:50%;top:50%;width:0;height:0;display:flex;align-items:center;justify-content:center;pointer-events:none}" +
+      ".alfa-wheel-label span{position:absolute;font-weight:900;color:#fff;font-size:15px;text-shadow:0 1px 3px rgba(0,0,0,.4);white-space:nowrap;transform:translateY(-100px);font-family:system-ui,sans-serif}" +
       ".alfa-gift-bar{position:fixed;left:0;right:0;padding:10px 20px;display:flex;align-items:center;gap:12px;font-family:system-ui,sans-serif;font-weight:700;font-size:13px;z-index:99998;box-shadow:0 2px 8px rgba(0,0,0,.1)}" +
       ".alfa-gift-bar.top{top:0}.alfa-gift-bar.bottom{bottom:0}" +
       ".alfa-gift-progress{flex:1;height:6px;background:rgba(255,255,255,.25);border-radius:3px;overflow:hidden}" +
@@ -743,6 +746,30 @@
   function openSpinWheel(opts) {
     var slices = opts.slices || [];
     if (!slices.length) return;
+    var sliceAngle = 360 / slices.length;
+    var defaultColors = ["#ef4444", "#f59e0b", "#10b981", "#3b82f6", "#a855f7", "#ec4899", "#06b6d4", "#84cc16"];
+
+    // Build conic-gradient for the slices
+    var stops = [];
+    slices.forEach(function (s, i) {
+      var color = (opts.winColors && opts.winColors[i]) || defaultColors[i % defaultColors.length];
+      var start = (i * sliceAngle - sliceAngle / 2 + 360) % 360;
+      var end = start + sliceAngle;
+      stops.push(color + " " + start + "deg " + end + "deg");
+    });
+    // Use 'from 0deg' so slice 0 is centered at top (under the arrow)
+    var gradient = "conic-gradient(from " + (-sliceAngle / 2) + "deg, " + stops.join(", ") + ")";
+
+    // Build label divs — each at center, rotated to its slice center
+    var labelsHTML = "";
+    slices.forEach(function (s, i) {
+      var angle = i * sliceAngle;
+      labelsHTML +=
+        '<div class="alfa-wheel-label" style="transform:translate(-50%,-50%) rotate(' + angle + 'deg)">' +
+        '<span style="transform:translateY(-100px) rotate(' + (-angle) + 'deg)">' + s + "</span>" +
+        "</div>";
+    });
+
     var overlay = document.createElement("div");
     overlay.className = "alfa-overlay";
     var popup = document.createElement("div");
@@ -751,51 +778,48 @@
     popup.style.color = opts.textColor || "#fff";
     popup.style.position = "relative";
     popup.style.maxWidth = "440px";
-    var sliceAngle = 360 / slices.length;
-    var sliceHTML = "";
-    slices.forEach(function (label, i) {
-      var bg = (opts.winColors && opts.winColors[i]) || "#10b981";
-      sliceHTML += '<div class="alfa-wheel-slice" style="transform:rotate(' + (i * sliceAngle) + 'deg) skewY(' + -(90 - sliceAngle) + 'deg);background:' + bg + '"><span style="transform:skewY(' + (90 - sliceAngle) + 'deg) rotate(' + (sliceAngle / 2) + 'deg);position:absolute;top:24px">' + label + "</span></div>";
-    });
     popup.innerHTML =
       '<button class="alfa-popup-close" aria-label="إغلاق">×</button>' +
       '<div class="alfa-popup-body" style="padding:24px">' +
       '<div class="alfa-popup-title">' + (opts.title || "🎁 جرّب حظك") + "</div>" +
       '<div class="alfa-popup-text">' + (opts.subtitle || "أدخل بريدك وأدر العجلة") + "</div>" +
-      '<input type="email" id="alfa-sw-email" placeholder="بريدك الإلكتروني" style="width:100%;padding:12px;border-radius:10px;border:none;font-size:14px;margin-bottom:12px;text-align:center;font-family:inherit;color:#0f172a">' +
-      '<div style="position:relative">' +
+      '<input type="email" id="alfa-sw-email" placeholder="بريدك الإلكتروني" style="width:100%;padding:12px;border-radius:10px;border:none;font-size:14px;margin-bottom:12px;text-align:center;font-family:inherit;color:#0f172a;outline:none">' +
+      '<div class="alfa-wheel-wrap">' +
       '<div class="alfa-wheel-arrow"></div>' +
-      '<div class="alfa-wheel" id="alfa-sw-wheel">' + sliceHTML + "</div>" +
+      '<div class="alfa-wheel" id="alfa-sw-wheel" style="background:' + gradient + '">' + labelsHTML + "</div>" +
+      '<div class="alfa-wheel-hub">🎁</div>' +
       "</div>" +
       '<button class="alfa-popup-btn" id="alfa-sw-spin" style="background:#fff;color:' + (opts.bgColor || "#0d9488") + ';margin-top:12px">' + (opts.buttonText || "أدر العجلة") + "</button>" +
-      '<div id="alfa-sw-result" style="margin-top:14px;font-size:18px;font-weight:900"></div>' +
+      '<div id="alfa-sw-result" style="margin-top:14px;font-size:18px;font-weight:900;min-height:28px"></div>' +
       "</div>";
     overlay.appendChild(popup);
     document.body.appendChild(overlay);
     function close() { overlay.style.transition = "opacity .25s"; overlay.style.opacity = "0"; setTimeout(function () { overlay.remove(); }, 250); }
     overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
     popup.querySelector(".alfa-popup-close").addEventListener("click", close);
+
     var spun = false;
     popup.querySelector("#alfa-sw-spin").addEventListener("click", function () {
       if (spun) return;
-      var email = popup.querySelector("#alfa-sw-email").value.trim();
-      if (!email || email.indexOf("@") === -1) { popup.querySelector("#alfa-sw-email").style.border = "2px solid #ef4444"; return; }
+      var emailEl = popup.querySelector("#alfa-sw-email");
+      var email = emailEl.value.trim();
+      if (!email || email.indexOf("@") === -1) { emailEl.style.boxShadow = "0 0 0 2px #ef4444"; emailEl.focus(); return; }
+      emailEl.style.boxShadow = "";
       spun = true;
       var winnerIdx = pickWinnerIndex(slices);
-      var rotations = 5;
-      var degrees = rotations * 360 + (360 - winnerIdx * sliceAngle - sliceAngle / 2);
+      // Spin 5 full turns clockwise, ending with slice center under top arrow
+      var degrees = 5 * 360 - winnerIdx * sliceAngle;
       var wheel = popup.querySelector("#alfa-sw-wheel");
       wheel.style.transform = "rotate(" + degrees + "deg)";
       this.disabled = true;
       this.style.opacity = ".5";
       setTimeout(function () {
         var label = slices[winnerIdx];
-        var winning = label && !/خسرت|loss/i.test(label);
+        var winning = label && !/خسرت|loss|lost|نفد/i.test(label);
         popup.querySelector("#alfa-sw-result").innerHTML = winning
           ? "🎉 ربحت خصم <span style='color:#fbbf24'>" + label + "</span>! تم إرسال الكوبون لبريدك"
           : "💔 حظ أوفر المرة القادمة";
-        // Optionally POST email + result back to your server for follow-up
-      }, 4200);
+      }, 4600);
     });
   }
   function pickWinnerIndex(slices) {
