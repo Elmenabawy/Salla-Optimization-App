@@ -937,32 +937,85 @@
   }
   function renderWishlist(opts) {
     if (!opts.enabled) return;
-    // Add heart icons to product cards
-    function addHearts() {
-      document.querySelectorAll("salla-product-card, .product-card, .product-item, [class*='product-card']").forEach(function (card) {
-        if (card.dataset.alfaWish) return;
-        card.dataset.alfaWish = "1";
-        var link = card.querySelector("a");
-        if (!link) return;
-        var url = link.href;
-        var img = card.querySelector("img");
-        var name = (card.querySelector(".product-title, h3, h4") || link).textContent.trim();
-        var heart = document.createElement("button");
-        heart.className = "alfa-wish-heart";
-        heart.innerHTML = "♥";
-        if (getWishlist().some(function (x) { return x.url === url; })) heart.classList.add("active");
-        card.style.position = "relative";
-        heart.addEventListener("click", function (e) {
-          e.preventDefault(); e.stopPropagation();
-          var added = toggleWishItem({ url: url, name: name, image: img ? img.src : "" });
-          heart.classList.toggle("active", added);
+
+    // === Hook into Salla's existing wishlist button ===
+    // Salla product cards already have a button with aria-label="Add or remove to wishlist".
+    // We DON'T add our own heart icon — we just listen for clicks on Salla's and
+    // mirror the action into our localStorage so the floating panel shows the items.
+
+    function infoFromCard(card) {
+      if (!card) return null;
+      var link = card.querySelector('a[href*="/p"]') || card.querySelector("a[href]");
+      if (!link || !link.href) return null;
+      var img = card.querySelector("img");
+      var nameEl = card.querySelector(".product-title, h3, h4, salla-product-title") || link;
+      return {
+        url: link.href,
+        name: (nameEl.textContent || "").trim(),
+        image: img ? img.src : "",
+      };
+    }
+
+    function syncFromSallaClick(target) {
+      var card = target.closest("salla-product-card, .product-card, .product-item, [class*='product-card'], .product");
+      var info = card ? infoFromCard(card) : null;
+      // Fallback for product detail pages (no card around the button)
+      if (!info) {
+        var p = getCurrentProduct();
+        if (!p.name) return;
+        info = { url: location.href, name: p.name, image: p.image };
+      }
+      toggleWishItem(info);
+      updateCount();
+      openOnce();
+    }
+
+    // Click listener for Salla's wishlist buttons
+    document.addEventListener("click", function (e) {
+      var btn = e.target.closest('[aria-label="Add or remove to wishlist" i], [aria-label*="wishlist" i], [aria-label*="مفضلة"], [aria-label*="المفضلة"], salla-wishlist-button');
+      if (!btn) return;
+      // Slight delay so Salla finishes its own toggle first
+      setTimeout(function () { syncFromSallaClick(btn); }, 50);
+    }, true);
+
+    // Subscribe to Salla SDK events for the most reliable sync
+    if (window.salla && salla.event && salla.event.on) {
+      try {
+        salla.event.on("wishlist::added", function (data) {
+          var p = (data && (data.product || data.payload || data)) || {};
+          if (!p.name && !p.url) return;
+          var list = getWishlist();
+          var url = p.url || p.permalink || "";
+          if (!list.some(function (x) { return x.url === url; })) {
+            list.unshift({
+              url: url,
+              name: p.name || "",
+              image: p.image || (p.images && p.images[0]) || "",
+            });
+            setWishlist(list);
+            updateCount();
+          }
+        });
+        salla.event.on("wishlist::removed", function (data) {
+          var p = (data && (data.product || data.payload || data)) || {};
+          var url = p.url || p.permalink || "";
+          if (!url) return;
+          setWishlist(getWishlist().filter(function (x) { return x.url !== url; }));
           updateCount();
         });
-        card.appendChild(heart);
-      });
+      } catch (e) {}
     }
-    // Floating button
+
+    // === Floating button + slide-in panel (unchanged) ===
     var btn = null, panel = null, countEl = null;
+    var openedOnce = false;
+    function openOnce() {
+      // Briefly pulse the floating button so user notices their list grew
+      if (btn && !openedOnce) {
+        btn.style.transform = "scale(1.18)";
+        setTimeout(function () { if (btn) btn.style.transform = ""; }, 250);
+      }
+    }
     if (opts.floatingButton) {
       btn = document.createElement("button");
       btn.className = "alfa-wish-btn";
@@ -981,19 +1034,23 @@
       if (!panel) {
         panel = document.createElement("div");
         panel.className = "alfa-wish-panel";
-        panel.innerHTML = '<div class="alfa-wish-head"><span>❤️ قائمة المفضلة</span><button style="background:none;border:none;cursor:pointer;font-size:24px">×</button></div><div class="alfa-wish-list" id="alfa-wish-list"></div>';
+        panel.innerHTML =
+          '<div class="alfa-wish-head"><span>❤️ قائمة المفضلة</span><button style="background:none;border:none;cursor:pointer;font-size:24px">×</button></div>' +
+          '<div class="alfa-wish-list" id="alfa-wish-list"></div>';
         document.body.appendChild(panel);
         panel.querySelector("button").addEventListener("click", function () { panel.classList.remove("open"); });
       }
       var list = getWishlist();
       panel.querySelector("#alfa-wish-list").innerHTML = list.length
-        ? list.map(function (p) { return '<a class="alfa-wish-item" href="' + p.url + '">' + (p.image ? '<img src="' + p.image + '">' : "") + '<div style="flex:1"><div style="font-weight:600;font-size:13px">' + p.name + "</div></div></a>"; }).join("")
+        ? list.map(function (p) {
+            return '<a class="alfa-wish-item" href="' + p.url + '">' +
+              (p.image ? '<img src="' + p.image + '">' : "") +
+              '<div style="flex:1"><div style="font-weight:600;font-size:13px">' + p.name + "</div></div></a>";
+          }).join("")
         : '<div style="text-align:center;padding:40px;color:#94a3b8">قائمتك فارغة</div>';
       panel.classList.add("open");
     }
     updateCount();
-    addHearts();
-    new MutationObserver(addHearts).observe(document.body, { childList: true, subtree: true });
   }
 
   // ---- Live Order Ticker ----
