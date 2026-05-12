@@ -130,9 +130,9 @@
       ".alfa-wish-btn{position:fixed;bottom:90px;right:20px;width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;box-shadow:0 4px 14px rgba(0,0,0,.18);z-index:99995;border:none;transition:transform .2s}" +
       ".alfa-wish-btn:hover{transform:scale(1.08)}" +
       ".alfa-wish-count{position:absolute;top:-4px;right:-4px;background:#fff;color:#ef4444;font-size:11px;font-weight:900;padding:2px 6px;border-radius:9999px;min-width:20px;text-align:center}" +
-      ".alfa-wish-heart{position:absolute;top:8px;right:8px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;z-index:10;transition:all .2s}" +
-      ".alfa-wish-heart:hover{transform:scale(1.1)}" +
-      ".alfa-wish-heart.active{background:#ef4444}" +
+      ".alfa-wish-heart.alfa-our-heart{color:#cbd5e0;font-size:20px;line-height:1}" +
+      ".alfa-wish-heart.alfa-our-heart.active{color:#ef4444;background:rgba(255,255,255,1)!important;box-shadow:0 4px 12px rgba(239,68,68,.25)!important;animation:alfaHeartPop .3s ease}" +
+      "@keyframes alfaHeartPop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}" +
       ".alfa-wish-panel{position:fixed;top:0;right:0;bottom:0;width:380px;max-width:90vw;background:#fff;color:#0f172a;box-shadow:-8px 0 30px rgba(0,0,0,.18);z-index:99999;transform:translateX(100%);transition:transform .3s;display:flex;flex-direction:column;font-family:system-ui,sans-serif}" +
       ".alfa-wish-panel.open{transform:translateX(0)}" +
       ".alfa-wish-head{padding:18px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;font-weight:800}" +
@@ -996,118 +996,144 @@
     var DEBUG = /[?&]wl-debug/.test(location.search);
     function dbg() { if (DEBUG) console.log.apply(console, ["[Alfa-Wishlist]"].concat([].slice.call(arguments))); }
 
-    // === Identify the specific product the user clicked ===
-    // Strategy: extract a unique product ID from the clicked button or the
-    // nearest data-attribute container. NEVER walk up to a category container.
+    // === 1. Hide Salla's native wishlist button (keep it in DOM so we can
+    //    click it programmatically to sync with Salla's own wishlist menu) ===
+    var hideStyle = document.createElement("style");
+    hideStyle.id = "alfa-hide-salla-wish";
+    hideStyle.textContent =
+      '[aria-label="Add or remove to wishlist" i]:not(.alfa-wish-heart),' +
+      '[aria-label*="wishlist" i]:not(.alfa-wish-heart),' +
+      '[aria-label*="المفضلة"]:not(.alfa-wish-heart),' +
+      '[aria-label*="مفضلة"]:not(.alfa-wish-heart),' +
+      'salla-wishlist:not(.alfa-wish-heart)' +
+      '{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important;clip-path:inset(50%)!important;}';
+    document.head.appendChild(hideStyle);
 
-    function extractProductId(btn) {
-      // 1. The button's own data attributes
-      var attrs = ["product-id", "data-product-id", "id", "data-id"];
+    function findProductIdInCard(card) {
+      if (!card) return null;
+      var attrs = ["product-id", "data-product-id", "data-id"];
       for (var i = 0; i < attrs.length; i++) {
-        var v = btn.getAttribute(attrs[i]);
+        var v = card.getAttribute(attrs[i]);
         if (v && /^\d+$/.test(String(v).trim())) return String(v).trim();
       }
-      // 2. The nearest ancestor element that has a product-id attribute
-      //    (use 'product-id' specifically, not generic 'data-id')
-      var attached = btn.closest("[product-id], [data-product-id]");
-      if (attached) {
-        var pid = attached.getAttribute("product-id") || attached.getAttribute("data-product-id");
-        if (pid && /^\d+$/.test(String(pid).trim())) return String(pid).trim();
+      var link = card.querySelector('a[href*="/p"]');
+      if (link) {
+        var m = (link.pathname || link.href || "").match(/\/p(\d+)/);
+        if (m) return m[1];
       }
-      // 3. Parse from a sibling product link inside the same web component
-      //    Only consider salla-product-card (the actual single product wrapper)
-      var card = btn.closest("salla-product-card");
-      if (card) {
-        var idAttr = card.getAttribute("product-id") || card.getAttribute("data-id") || card.getAttribute("id");
-        if (idAttr && /^\d+$/.test(String(idAttr).trim())) return String(idAttr).trim();
-        var link = card.querySelector('a[href*="/p"]');
-        if (link) {
-          var m = (link.pathname || link.href || "").match(/\/p(\d+)/);
-          if (m) return m[1];
-        }
-      }
-      // 4. On a product detail page, read the current product ID
-      var p = getCurrentProduct();
-      if (p && p.id) return String(p.id);
-      // 5. URL fallback
-      var um = location.pathname.match(/\/p(\d+)/);
-      if (um) return um[1];
       return null;
     }
 
-    function infoFromButton(btn, productId) {
-      // Build a minimal record. Prefer data scoped to the salla-product-card
-      // web component because it always wraps exactly one product.
-      var card = btn.closest("salla-product-card") || btn.closest(".product-card") || btn.closest("[class*='product-card']");
-      var name = "";
-      var image = "";
+    function extractCardInfo(card, productId) {
+      var name = card.getAttribute("name") || card.getAttribute("title") || "";
+      var image = card.getAttribute("image") || "";
       var url = "";
-      if (card) {
-        var titleAttr = card.getAttribute("name") || card.getAttribute("title");
-        if (titleAttr) name = titleAttr;
-        var imgAttr = card.getAttribute("image");
-        if (imgAttr) image = imgAttr;
+      if (!image) {
         var img = card.querySelector("img");
-        if (!image && img) image = img.src || img.getAttribute("data-src") || "";
-        if (!name) {
-          var titleEl = card.querySelector(".product-title, h3, h4, [class*='title']");
-          if (titleEl) name = (titleEl.textContent || "").trim().split(/\n/)[0].substring(0, 150);
-        }
-        var link = card.querySelector('a[href*="/p"]');
-        if (link) url = link.href;
+        if (img) image = img.src || img.getAttribute("data-src") || "";
       }
-      if (!url && productId) url = location.origin + "/p" + productId;
       if (!name) {
-        var cur = getCurrentProduct();
-        if (cur && cur.name) { name = cur.name; image = image || cur.image; }
+        var titleEl = card.querySelector(".product-title, h3, h4, [class*='title']");
+        if (titleEl) name = (titleEl.textContent || "").trim().split(/\n/)[0].substring(0, 150);
       }
+      var link = card.querySelector('a[href*="/p"]');
+      if (link) url = link.href;
+      if (!url && productId) url = location.origin + "/p" + productId;
       return { id: productId, url: url, name: name || ("منتج #" + productId), image: image };
     }
 
-    // Debounce — keyed by product ID
-    var lastClickTime = 0;
-    var lastClickId = "";
+    function isInWishlist(productId) {
+      return getWishlist().some(function (x) { return String(x.id) === String(productId); });
+    }
 
-    function syncFromSallaClick(btn) {
-      var productId = extractProductId(btn);
-      dbg("click", { productId: productId, btn: btn });
-      if (!productId) {
-        dbg("rejected — no product id");
-        return;
-      }
-      var now = Date.now();
-      if (productId === lastClickId && now - lastClickTime < 600) {
-        dbg("rejected — debounced");
-        return;
-      }
-      lastClickTime = now;
-      lastClickId = productId;
+    // === 2. Inject our own heart icon onto each product card ===
+    function addHearts() {
+      var cards = document.querySelectorAll(
+        "salla-product-card:not([data-alfa-heart])," +
+        ".product-card:not([data-alfa-heart])," +
+        "[class*='product-card']:not([data-alfa-heart])"
+      );
+      cards.forEach(function (card) {
+        card.setAttribute("data-alfa-heart", "1");
+        var productId = findProductIdInCard(card);
+        if (!productId) return;
 
-      var info = infoFromButton(btn, productId);
-      dbg("info", info);
+        // Make sure card can host an absolute child
+        var pos = getComputedStyle(card).position;
+        if (pos === "static") card.style.position = "relative";
 
-      // toggleWishItem uses URL as the unique key — but we now know it by ID.
-      // Use the ID directly: same ID = same product across pages/sessions.
+        var heart = document.createElement("button");
+        heart.className = "alfa-wish-heart alfa-our-heart";
+        heart.setAttribute("data-product-id", productId);
+        heart.setAttribute("aria-label", "Add or remove from favorites");
+        heart.type = "button";
+        heart.innerHTML = "♥";
+        if (isInWishlist(productId)) heart.classList.add("active");
+        // Direction-aware: in RTL page place on the LEFT, in LTR on the RIGHT
+        var rtl = (document.documentElement.dir || "").toLowerCase() === "rtl";
+        heart.style.cssText =
+          "position:absolute;top:10px;" + (rtl ? "left:10px;" : "right:10px;") +
+          "z-index:10;width:36px;height:36px;border-radius:50%;background:rgba(255,255,255,.95);" +
+          "border:none;cursor:pointer;font-size:18px;color:#cbd5e0;display:flex;align-items:center;justify-content:center;" +
+          "box-shadow:0 2px 8px rgba(0,0,0,.12);transition:all .2s;backdrop-filter:blur(4px);font-family:system-ui";
+        heart.addEventListener("mouseenter", function () { heart.style.transform = "scale(1.12)"; });
+        heart.addEventListener("mouseleave", function () { heart.style.transform = ""; });
+        heart.addEventListener("click", function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          toggleProductWishlist(productId, card, heart);
+        });
+        card.appendChild(heart);
+      });
+    }
+
+    function toggleProductWishlist(productId, card, heart) {
+      dbg("toggle", productId);
       var list = getWishlist();
       var idx = list.findIndex(function (x) { return String(x.id) === String(productId); });
+      var added;
       if (idx >= 0) {
         list.splice(idx, 1);
-        dbg("removed", productId);
+        added = false;
       } else {
-        list.unshift(info);
-        dbg("added", info);
+        list.unshift(extractCardInfo(card, productId));
+        added = true;
       }
       setWishlist(list);
       updateCount();
       openOnce();
+      heart.classList.toggle("active", added);
+
+      // === 3. ALSO trigger Salla's native wishlist so the product
+      //    appears in Salla's built-in wishlist menu/page ===
+      triggerSallaWishlist(card, productId);
     }
 
-    document.addEventListener("click", function (e) {
-      if (!e.isTrusted) return;
-      var btn = e.target.closest('[aria-label="Add or remove to wishlist" i], [aria-label*="wishlist" i], [aria-label*="المفضلة"], [aria-label*="مفضلة"], salla-wishlist-button');
-      if (!btn) return;
-      setTimeout(function () { syncFromSallaClick(btn); }, 80);
-    }, true);
+    function triggerSallaWishlist(card, productId) {
+      // Strategy A: click Salla's hidden button inside this card
+      try {
+        var sallaBtn = card.querySelector(
+          '[aria-label="Add or remove to wishlist" i]:not(.alfa-our-heart),' +
+          '[aria-label*="wishlist" i]:not(.alfa-our-heart),' +
+          '[aria-label*="المفضلة"]:not(.alfa-our-heart),' +
+          'salla-wishlist:not(.alfa-our-heart)'
+        );
+        if (sallaBtn) { sallaBtn.click(); dbg("clicked salla btn"); return; }
+      } catch (e) {}
+      // Strategy B: Salla SDK directly
+      try {
+        if (window.salla && salla.wishlist) {
+          if (typeof salla.wishlist.toggle === "function") salla.wishlist.toggle(productId);
+          else if (typeof salla.wishlist.addItem === "function") salla.wishlist.addItem(productId);
+          else if (typeof salla.wishlist.add === "function") salla.wishlist.add(productId);
+          dbg("used salla.wishlist SDK");
+        }
+      } catch (e) { dbg("salla SDK failed", e); }
+    }
+
+    // Add hearts now and to anything injected later (SPA navigation, lazy lists)
+    addHearts();
+    new MutationObserver(function () { addHearts(); }).observe(document.body, { childList: true, subtree: true });
 
     // === Floating button + slide-in panel (unchanged) ===
     var btn = null, panel = null, countEl = null;
