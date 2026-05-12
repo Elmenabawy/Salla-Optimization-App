@@ -993,66 +993,120 @@
   function renderWishlist(opts) {
     if (!opts.enabled) return;
 
-    // === Hook into Salla's existing wishlist button ===
-    // We listen ONLY for explicit user clicks on the wishlist button —
-    // not Salla SDK events, because those fire for every item already in
-    // the wishlist on page load (inflating our count).
+    var DEBUG = /[?&]wl-debug/.test(location.search);
+    function dbg() { if (DEBUG) console.log.apply(console, ["[Alfa-Wishlist]"].concat([].slice.call(arguments))); }
 
-    function infoFromCard(card) {
-      if (!card) return null;
-      // Look for a link that goes to a product page (path starts with /p<digits> or /products/)
-      var link = card.querySelector('a[href*="/p"]') || card.querySelector("a[href]");
-      if (!link || !link.href) return null;
-      // Reject if the link doesn't look like a product URL
-      if (!/\/(p\d+|product\/|products\/)/.test(link.pathname || link.href)) return null;
-      var img = card.querySelector("img");
-      // Find the title within THIS card only (not deeper containers)
-      var nameEl = card.querySelector(".product-title, h3.title, h4.title, salla-product-title");
-      if (!nameEl) nameEl = link;
-      // Take only the first text node so we don't get all-products text
-      var name = (nameEl.textContent || "").trim().split(/\s{2,}|\n/)[0].substring(0, 200);
-      return {
-        url: link.href,
-        name: name,
-        image: img ? img.src : "",
-      };
+    // === Identify the specific product the user clicked ===
+    // Strategy: extract a unique product ID from the clicked button or the
+    // nearest data-attribute container. NEVER walk up to a category container.
+
+    function extractProductId(btn) {
+      // 1. The button's own data attributes
+      var attrs = ["product-id", "data-product-id", "id", "data-id"];
+      for (var i = 0; i < attrs.length; i++) {
+        var v = btn.getAttribute(attrs[i]);
+        if (v && /^\d+$/.test(String(v).trim())) return String(v).trim();
+      }
+      // 2. The nearest ancestor element that has a product-id attribute
+      //    (use 'product-id' specifically, not generic 'data-id')
+      var attached = btn.closest("[product-id], [data-product-id]");
+      if (attached) {
+        var pid = attached.getAttribute("product-id") || attached.getAttribute("data-product-id");
+        if (pid && /^\d+$/.test(String(pid).trim())) return String(pid).trim();
+      }
+      // 3. Parse from a sibling product link inside the same web component
+      //    Only consider salla-product-card (the actual single product wrapper)
+      var card = btn.closest("salla-product-card");
+      if (card) {
+        var idAttr = card.getAttribute("product-id") || card.getAttribute("data-id") || card.getAttribute("id");
+        if (idAttr && /^\d+$/.test(String(idAttr).trim())) return String(idAttr).trim();
+        var link = card.querySelector('a[href*="/p"]');
+        if (link) {
+          var m = (link.pathname || link.href || "").match(/\/p(\d+)/);
+          if (m) return m[1];
+        }
+      }
+      // 4. On a product detail page, read the current product ID
+      var p = getCurrentProduct();
+      if (p && p.id) return String(p.id);
+      // 5. URL fallback
+      var um = location.pathname.match(/\/p(\d+)/);
+      if (um) return um[1];
+      return null;
     }
 
-    // Per-click debounce so the same product can't be double-counted
-    var lastClickTime = 0;
-    var lastClickUrl = "";
-
-    function syncFromSallaClick(target) {
-      // Narrow card detection — only specific product card containers, not generic .product
-      var card = target.closest("salla-product-card") ||
-                 target.closest(".product-card") ||
-                 target.closest("[class*='product-card']") ||
-                 target.closest(".product-item");
-      var info = card ? infoFromCard(card) : null;
-      // Fallback for product detail pages (button outside a card)
-      if (!info) {
-        var p = getCurrentProduct();
-        if (!p.name) return;
-        info = { url: location.href, name: p.name, image: p.image };
+    function infoFromButton(btn, productId) {
+      // Build a minimal record. Prefer data scoped to the salla-product-card
+      // web component because it always wraps exactly one product.
+      var card = btn.closest("salla-product-card") || btn.closest(".product-card") || btn.closest("[class*='product-card']");
+      var name = "";
+      var image = "";
+      var url = "";
+      if (card) {
+        var titleAttr = card.getAttribute("name") || card.getAttribute("title");
+        if (titleAttr) name = titleAttr;
+        var imgAttr = card.getAttribute("image");
+        if (imgAttr) image = imgAttr;
+        var img = card.querySelector("img");
+        if (!image && img) image = img.src || img.getAttribute("data-src") || "";
+        if (!name) {
+          var titleEl = card.querySelector(".product-title, h3, h4, [class*='title']");
+          if (titleEl) name = (titleEl.textContent || "").trim().split(/\n/)[0].substring(0, 150);
+        }
+        var link = card.querySelector('a[href*="/p"]');
+        if (link) url = link.href;
       }
-      if (!info.url || !info.name) return;
-      // Debounce: ignore same URL within 600ms
-      var now = Date.now();
-      if (info.url === lastClickUrl && now - lastClickTime < 600) return;
-      lastClickTime = now;
-      lastClickUrl = info.url;
+      if (!url && productId) url = location.origin + "/p" + productId;
+      if (!name) {
+        var cur = getCurrentProduct();
+        if (cur && cur.name) { name = cur.name; image = image || cur.image; }
+      }
+      return { id: productId, url: url, name: name || ("منتج #" + productId), image: image };
+    }
 
-      toggleWishItem(info);
+    // Debounce — keyed by product ID
+    var lastClickTime = 0;
+    var lastClickId = "";
+
+    function syncFromSallaClick(btn) {
+      var productId = extractProductId(btn);
+      dbg("click", { productId: productId, btn: btn });
+      if (!productId) {
+        dbg("rejected — no product id");
+        return;
+      }
+      var now = Date.now();
+      if (productId === lastClickId && now - lastClickTime < 600) {
+        dbg("rejected — debounced");
+        return;
+      }
+      lastClickTime = now;
+      lastClickId = productId;
+
+      var info = infoFromButton(btn, productId);
+      dbg("info", info);
+
+      // toggleWishItem uses URL as the unique key — but we now know it by ID.
+      // Use the ID directly: same ID = same product across pages/sessions.
+      var list = getWishlist();
+      var idx = list.findIndex(function (x) { return String(x.id) === String(productId); });
+      if (idx >= 0) {
+        list.splice(idx, 1);
+        dbg("removed", productId);
+      } else {
+        list.unshift(info);
+        dbg("added", info);
+      }
+      setWishlist(list);
       updateCount();
       openOnce();
     }
 
-    // Click listener — only user-triggered clicks (event.isTrusted = true)
     document.addEventListener("click", function (e) {
-      if (!e.isTrusted) return; // ignore programmatic clicks
+      if (!e.isTrusted) return;
       var btn = e.target.closest('[aria-label="Add or remove to wishlist" i], [aria-label*="wishlist" i], [aria-label*="المفضلة"], [aria-label*="مفضلة"], salla-wishlist-button');
       if (!btn) return;
-      setTimeout(function () { syncFromSallaClick(btn); }, 100);
+      setTimeout(function () { syncFromSallaClick(btn); }, 80);
     }, true);
 
     // === Floating button + slide-in panel (unchanged) ===
