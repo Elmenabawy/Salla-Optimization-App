@@ -737,6 +737,24 @@
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
+  // ---- Lead capture helper (POSTs email to our server) ----
+  function saveLead(payload) {
+    var storeId = getStoreId();
+    if (!storeId) return;
+    try {
+      fetch(apiBase + "/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          store: storeId,
+          email: payload.email,
+          source: payload.source || "widget",
+          prize: payload.prize || null,
+        }),
+      }).catch(function () {});
+    } catch (e) {}
+  }
+
   // ---- Spin-the-Wheel Discount Popup ----
   function renderSpinWheel(opts) {
     if (!opts.enabled) return;
@@ -803,21 +821,29 @@
       if (spun) return;
       var emailEl = popup.querySelector("#alfa-sw-email");
       var email = emailEl.value.trim();
-      if (!email || email.indexOf("@") === -1) { emailEl.style.boxShadow = "0 0 0 2px #ef4444"; emailEl.focus(); return; }
+      if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        emailEl.style.boxShadow = "0 0 0 2px #ef4444";
+        emailEl.focus();
+        return;
+      }
       emailEl.style.boxShadow = "";
       spun = true;
       var winnerIdx = pickWinnerIndex(slices);
+      var prize = slices[winnerIdx];
       // Spin 5 full turns clockwise, ending with slice center under top arrow
       var degrees = 5 * 360 - winnerIdx * sliceAngle;
       var wheel = popup.querySelector("#alfa-sw-wheel");
       wheel.style.transform = "rotate(" + degrees + "deg)";
       this.disabled = true;
       this.style.opacity = ".5";
+
+      // Save the lead to our server
+      saveLead({ email: email, source: "spin-wheel", prize: prize });
+
       setTimeout(function () {
-        var label = slices[winnerIdx];
-        var winning = label && !/خسرت|loss|lost|نفد/i.test(label);
+        var winning = prize && !/خسرت|loss|lost|نفد/i.test(prize);
         popup.querySelector("#alfa-sw-result").innerHTML = winning
-          ? "🎉 ربحت خصم <span style='color:#fbbf24'>" + label + "</span>! تم إرسال الكوبون لبريدك"
+          ? "🎉 ربحت خصم <span style='color:#fbbf24'>" + prize + "</span>! تم إرسال الكوبون لبريدك"
           : "💔 حظ أوفر المرة القادمة";
       }, 4600);
     });

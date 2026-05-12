@@ -102,6 +102,7 @@
   <button class="tab-btn" onclick="showTab(event,'actions')">✅ خطة العمل</button>
   <button class="tab-btn" onclick="showTab(event,'ai')">🤖 الاقتراحات</button>
   <button class="tab-btn" onclick="showTab(event,'features')">⚙️ ميزات المتجر</button>
+  <button class="tab-btn" onclick="showTab(event,'leads')">📧 العملاء المحتملين</button>
 </div>
 
 <!-- SEO -->
@@ -671,6 +672,48 @@
   {% endif %}
 </div>
 
+<!-- LEADS TAB -->
+<div id="tab-leads" class="tab-content space-y-6">
+  {% if not isLogin %}
+  <div class="glass rounded-2xl p-8 text-center">
+    <div class="text-3xl mb-3">🔐</div>
+    <p class="text-slate-300">يجب تسجيل الدخول لعرض العملاء المحتملين</p>
+  </div>
+  {% else %}
+  <div class="glass rounded-2xl p-6">
+    <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+      <div>
+        <h2 class="text-xl font-bold text-white mb-1">📧 العملاء المحتملين</h2>
+        <p class="text-sm text-slate-400">إيميلات جُمعت من عجلة الحظ والنوافذ المنبثقة</p>
+      </div>
+      <div class="flex gap-2">
+        <button onclick="loadMyLeads(true)" class="grad-bg text-white px-4 py-2 rounded-lg text-sm font-bold">🔄 تحديث</button>
+        <a href="/api/my-leads/export" class="grad-bg text-white px-4 py-2 rounded-lg text-sm font-bold no-underline">📥 تصدير CSV</a>
+      </div>
+    </div>
+    <div id="ml-loading" class="text-center py-8 text-slate-400">⏳ جاري التحميل...</div>
+    <div id="ml-empty" style="display:none" class="text-center py-12 text-slate-400">
+      <div class="text-5xl mb-3">📭</div>
+      <div class="font-bold">لا توجد إيميلات بعد</div>
+      <div class="text-sm mt-1">فعّل عجلة الحظ من تبويب "ميزات المتجر" لبدء جمع الإيميلات</div>
+    </div>
+    <div id="ml-table" style="display:none;overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse" class="text-sm">
+        <thead>
+          <tr style="border-bottom:1px solid rgba(148,163,184,0.2)">
+            <th style="text-align:right;padding:10px;font-weight:700;color:#94a3b8">البريد الإلكتروني</th>
+            <th style="text-align:right;padding:10px;font-weight:700;color:#94a3b8">المصدر</th>
+            <th style="text-align:right;padding:10px;font-weight:700;color:#94a3b8">الجائزة</th>
+            <th style="text-align:right;padding:10px;font-weight:700;color:#94a3b8">التاريخ</th>
+          </tr>
+        </thead>
+        <tbody id="ml-tbody"></tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
 {% endif %}
 
 </section>
@@ -681,6 +724,44 @@ function showTab(e, name) {
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   e.currentTarget.classList.add('active');
+  if (name === 'leads') loadMyLeads();
+}
+
+var _myLeadsLoaded = false;
+function loadMyLeads(force) {
+  if (_myLeadsLoaded && !force) return;
+  var loading = document.getElementById('ml-loading');
+  if (!loading) return;
+  var empty = document.getElementById('ml-empty');
+  var table = document.getElementById('ml-table');
+  var tbody = document.getElementById('ml-tbody');
+  loading.style.display = '';
+  empty.style.display = 'none';
+  table.style.display = 'none';
+  fetch('/api/my-leads')
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      _myLeadsLoaded = true;
+      loading.style.display = 'none';
+      var leads = data.leads || [];
+      if (!leads.length) { empty.style.display = ''; return; }
+      var sourceLabels = {
+        'spin-wheel': '🎰 عجلة الحظ',
+        'exit-intent': '🚪 إعلان الخروج',
+        'newsletter': '📧 النشرة البريدية',
+        'custom-popup': '🎁 نافذة مخصصة',
+      };
+      tbody.innerHTML = leads.map(function (l) {
+        var d = new Date(l.timestamp);
+        return '<tr style="border-bottom:1px solid rgba(148,163,184,0.1)">' +
+          '<td style="padding:10px;direction:ltr;text-align:right;color:#e2e8f0">' + l.email + '</td>' +
+          '<td style="padding:10px;color:#cbd5e0">' + (sourceLabels[l.source] || l.source) + '</td>' +
+          '<td style="padding:10px;color:#2dd4bf;font-weight:700">' + (l.prize || '—') + '</td>' +
+          '<td style="padding:10px;color:#94a3b8;font-size:12px">' + d.toLocaleString('ar-SA') + '</td></tr>';
+      }).join('');
+      table.style.display = '';
+    })
+    .catch(function () { loading.textContent = '❌ تعذّر تحميل البيانات'; });
 }
 
 // Features tab — wire up settings load/save via session-authenticated API

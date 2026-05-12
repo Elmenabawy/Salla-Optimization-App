@@ -15,6 +15,7 @@ const bodyParser = require("body-parser");
 const { analyzeStore, loadAnalysis } = require("./services/SeoAnalyzer");
 const DemoData = require("./services/DemoData");
 const { loadSettings, saveSettings } = require("./services/MerchantSettings");
+const { loadLeads, addLead, toCSV } = require("./services/Leads");
 const port = process.argv[2] || 8082;
 
 /*
@@ -349,6 +350,30 @@ app.use("/api/widget-config", (req, res, next) => {
   next();
 });
 
+// Public endpoint — called by the widget on storefronts when a visitor
+// submits their email (spin wheel, exit intent, newsletter, etc.)
+app.use("/api/lead", (req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Methods", "POST,OPTIONS");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type");
+  if (req.method === "OPTIONS") return res.status(204).end();
+  next();
+});
+
+app.post("/api/lead", (req, res) => {
+  const storeId = req.body?.store || req.query.store;
+  const email = req.body?.email;
+  if (!storeId || !email) return res.status(400).json({ error: "store and email required" });
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: "invalid email" });
+  const saved = addLead(storeId, {
+    email,
+    source: req.body?.source || "unknown",
+    prize: req.body?.prize || null,
+    userAgent: req.headers["user-agent"],
+  });
+  res.json({ ok: true, lead: saved });
+});
+
 app.get("/api/widget-config", (req, res) => {
   const storeId = req.query.store;
   // Demo preview used by the marketing landing page
@@ -595,6 +620,42 @@ async function getMyMerchantData(req, res, sallaUrl) {
 app.get("/api/my-merchant-products", ensureAuthenticated, (req, res) =>
   getMyMerchantData(req, res, "https://api.salla.dev/admin/v2/products?per_page=100")
 );
+
+// ============================================================
+// Leads APIs — return collected emails per merchant
+// ============================================================
+
+// Iframe-token authenticated
+app.get("/api/leads", (req, res) => {
+  const merchantId = authIframeRequest(req, res);
+  if (!merchantId) return;
+  res.json({ leads: loadLeads(merchantId) });
+});
+
+app.get("/api/leads/export", (req, res) => {
+  const merchantId = authIframeRequest(req, res);
+  if (!merchantId) return;
+  const csv = toCSV(loadLeads(merchantId));
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename=leads_${merchantId}.csv`);
+  res.send("﻿" + csv); // BOM so Excel reads UTF-8 (Arabic) correctly
+});
+
+// Session-authenticated (for the main /analysis page)
+app.get("/api/my-leads", ensureAuthenticated, (req, res) => {
+  const merchantId = req.user?.merchant?.id;
+  if (!merchantId) return res.status(401).json({ leads: [] });
+  res.json({ leads: loadLeads(merchantId) });
+});
+
+app.get("/api/my-leads/export", ensureAuthenticated, (req, res) => {
+  const merchantId = req.user?.merchant?.id;
+  if (!merchantId) return res.status(401).send("Unauthorized");
+  const csv = toCSV(loadLeads(merchantId));
+  res.setHeader("Content-Type", "text/csv; charset=utf-8");
+  res.setHeader("Content-Disposition", `attachment; filename=leads_${merchantId}.csv`);
+  res.send("﻿" + csv);
+});
 
 app.get("/api/my-merchant-categories", ensureAuthenticated, (req, res) =>
   getMyMerchantData(req, res, "https://api.salla.dev/admin/v2/categories?per_page=100")

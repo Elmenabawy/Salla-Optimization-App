@@ -134,6 +134,7 @@
     <button class="tab-btn" onclick="t(event,'actions')">✅ خطة العمل</button>
     <button class="tab-btn" onclick="t(event,'ai')">🤖 الاقتراحات</button>
     <button class="tab-btn" onclick="t(event,'features')">⚙️ ميزات المتجر</button>
+    <button class="tab-btn" onclick="t(event,'leads')">📧 العملاء المحتملين</button>
   </div>
 
   <!-- SEO -->
@@ -768,6 +769,43 @@
     </div>
   </div>
 
+  <!-- LEADS TAB -->
+  <div id="tab-leads" class="tab-content">
+    <div class="card p-5">
+      <div class="flex items-center justify-between mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">📧 العملاء المحتملين (Leads)</h3>
+          <p class="text-sm text-slate-500">إيميلات جُمعت من عجلة الحظ، إعلان الخروج، والنوافذ المنبثقة</p>
+        </div>
+        <div class="flex gap-2">
+          <button id="leads-refresh" class="grad-bg text-white px-4 py-2 rounded-lg text-sm font-bold">🔄 تحديث</button>
+          <a id="leads-export" class="grad-bg text-white px-4 py-2 rounded-lg text-sm font-bold no-underline">📥 تصدير CSV</a>
+        </div>
+      </div>
+      <div id="leads-loading" class="text-center py-8 text-slate-400">⏳ جاري التحميل...</div>
+      <div id="leads-empty" style="display:none" class="text-center py-12 text-slate-400">
+        <div class="text-5xl mb-3">📭</div>
+        <div class="font-bold">لا توجد إيميلات بعد</div>
+        <div class="text-sm mt-1">فعّل عجلة الحظ أو إعلان الخروج لبدء جمع الإيميلات</div>
+      </div>
+      <div id="leads-table" style="display:none">
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse" class="text-sm">
+            <thead style="background:#f1f5f9">
+              <tr>
+                <th style="text-align:right;padding:10px;font-weight:700">البريد الإلكتروني</th>
+                <th style="text-align:right;padding:10px;font-weight:700">المصدر</th>
+                <th style="text-align:right;padding:10px;font-weight:700">الجائزة</th>
+                <th style="text-align:right;padding:10px;font-weight:700">التاريخ</th>
+              </tr>
+            </thead>
+            <tbody id="leads-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
   {% endif %}
 </div>
 
@@ -788,6 +826,50 @@ function t(e, name) {
   document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
   document.getElementById('tab-' + name).classList.add('active');
   e.currentTarget.classList.add('active');
+  if (name === 'leads') loadLeads();
+}
+
+(function () {
+  var iframeToken = "{{ iframeToken }}";
+  var exportBtn = document.getElementById('leads-export');
+  if (exportBtn) exportBtn.href = '/api/leads/export?token=' + encodeURIComponent(iframeToken);
+  var refreshBtn = document.getElementById('leads-refresh');
+  if (refreshBtn) refreshBtn.addEventListener('click', function () { loadLeads(true); });
+})();
+
+var _leadsLoaded = false;
+function loadLeads(force) {
+  if (_leadsLoaded && !force) return;
+  var loading = document.getElementById('leads-loading');
+  var empty = document.getElementById('leads-empty');
+  var table = document.getElementById('leads-table');
+  var tbody = document.getElementById('leads-tbody');
+  if (!loading) return;
+  loading.style.display = '';
+  empty.style.display = 'none';
+  table.style.display = 'none';
+  fetch('/api/leads?token=' + encodeURIComponent("{{ iframeToken }}"))
+    .then(function (r) { return r.json(); })
+    .then(function (data) {
+      _leadsLoaded = true;
+      loading.style.display = 'none';
+      var leads = data.leads || [];
+      if (!leads.length) { empty.style.display = ''; return; }
+      var sourceLabels = {
+        'spin-wheel': '🎰 عجلة الحظ',
+        'exit-intent': '🚪 إعلان الخروج',
+        'newsletter': '📧 النشرة البريدية',
+        'custom-popup': '🎁 نافذة مخصصة',
+      };
+      tbody.innerHTML = leads.map(function (l) {
+        var d = new Date(l.timestamp);
+        return '<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:10px;direction:ltr;text-align:right">' + l.email + '</td><td style="padding:10px">' + (sourceLabels[l.source] || l.source) + '</td><td style="padding:10px;color:#0d9488;font-weight:700">' + (l.prize || '—') + '</td><td style="padding:10px;color:#64748b;font-size:12px">' + d.toLocaleString('ar-SA') + '</td></tr>';
+      }).join('');
+      table.style.display = '';
+    })
+    .catch(function () {
+      loading.textContent = '❌ تعذّر تحميل البيانات';
+    });
 }
 
 // === Feature settings panel ===
