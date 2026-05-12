@@ -856,34 +856,73 @@
   // ---- Free Gift Threshold Bar ----
   function renderFreeGiftBar(opts) {
     if (!opts.enabled) return;
-    function getCartTotal() {
+
+    var currentTotal = 0;
+
+    // Salla's cart.total can be a number OR an object like { amount: 99.5, currency: 'SAR' }
+    function normalizeTotal(t) {
+      if (t === null || t === undefined) return null;
+      if (typeof t === "object") return Number(t.amount) || 0;
+      return Number(t) || 0;
+    }
+
+    function fetchCartTotal() {
+      // 1. Promise-based fetch (most reliable in Twilight themes)
       try {
-        if (window.salla && salla.cart && typeof salla.cart.getTotal === "function") {
-          return Number(salla.cart.getTotal()) || 0;
-        }
-        if (window.salla && salla.config && salla.config.get) {
-          return Number(salla.config.get("cart.total") || 0) || 0;
+        if (window.salla && salla.cart && typeof salla.cart.fetch === "function") {
+          var p = salla.cart.fetch();
+          if (p && typeof p.then === "function") {
+            p.then(function (cart) {
+              var t = cart && (cart.total !== undefined ? cart.total : cart.sub_total);
+              var n = normalizeTotal(t);
+              if (n !== null) { currentTotal = n; update(); }
+            }).catch(function () {});
+            return;
+          }
         }
       } catch (e) {}
-      // Fallback: scrape from DOM
-      var el = document.querySelector(".cart-total, salla-cart-summary [data-total]");
-      if (el) {
-        var m = el.textContent.match(/[\d,.]+/);
-        if (m) return parseFloat(m[0].replace(/,/g, "")) || 0;
+
+      // 2. Config (sync) — multiple possible paths
+      try {
+        if (window.salla && salla.config && salla.config.get) {
+          var keys = ["cart.total", "store.cart.total", "cart.sub_total", "cart.subtotal"];
+          for (var i = 0; i < keys.length; i++) {
+            var v = salla.config.get(keys[i]);
+            var n = normalizeTotal(v);
+            if (n !== null && n > 0) { currentTotal = n; update(); return; }
+          }
+        }
+      } catch (e) {}
+
+      // 3. DOM scraping — broad set of common selectors
+      var selectors = [
+        "salla-cart-summary [data-total]",
+        ".cart-summary .total",
+        ".cart-total",
+        "[data-cart-total]",
+        ".total-amount",
+        "[class*='cart'][class*='total']",
+      ];
+      for (var j = 0; j < selectors.length; j++) {
+        var el = document.querySelector(selectors[j]);
+        if (el) {
+          var m = el.textContent.replace(/,/g, "").match(/[\d.]+/);
+          if (m) { currentTotal = parseFloat(m[0]) || 0; update(); return; }
+        }
       }
-      return 0;
     }
+
     var bar = document.createElement("div");
     bar.className = "alfa-gift-bar " + (opts.position === "bottom" ? "bottom" : "top");
     bar.style.background = opts.bgColor || "#0d9488";
     bar.style.color = opts.textColor || "#fff";
     document.body.appendChild(bar);
+
     function update() {
-      var total = getCartTotal();
       var threshold = opts.threshold || 200;
-      var pct = Math.min(100, (total / threshold) * 100);
-      var remaining = Math.max(0, threshold - total).toFixed(2);
-      var text = total >= threshold
+      var pct = Math.min(100, (currentTotal / threshold) * 100);
+      var remaining = Math.max(0, threshold - currentTotal).toFixed(2);
+      var text = currentTotal >= threshold
         ? (opts.textReached || "🎉 رائع! أضفنا الهدية المجانية إلى طلبك")
         : (opts.textBelow || "أضف {remaining} {currency} للحصول على هدية مجانية 🎁")
             .replace("{remaining}", remaining)
@@ -891,13 +930,29 @@
       bar.innerHTML =
         '<span>' + text + '</span>' +
         '<div class="alfa-gift-progress"><div class="alfa-gift-progress-fill" style="width:' + pct + '%;background:' + (opts.progressColor || "#fbbf24") + '"></div></div>' +
-        '<span style="font-weight:900">' + Math.round(pct) + "%</span>";
+        '<span style="font-weight:900;min-width:36px;text-align:center">' + Math.round(pct) + "%</span>";
     }
+
     update();
+
+    // Subscribe to every Salla cart event we know of — different theme
+    // versions emit different event names
     if (window.salla && salla.event && salla.event.on) {
-      try { salla.event.on("cart::updated", update); salla.event.on("cart::item.added", update); } catch (e) {}
+      ["cart::updated", "cart::added", "cart::removed", "cart::ready", "cart::item.added", "cart::item.removed", "cart::changed", "salla::cart::updated"].forEach(function (ev) {
+        try {
+          salla.event.on(ev, function (data) {
+            var t = data && (data.total !== undefined ? data.total : (data.cart && data.cart.total));
+            var n = normalizeTotal(t);
+            if (n !== null) { currentTotal = n; update(); }
+            else fetchCartTotal();
+          });
+        } catch (e) {}
+      });
     }
-    setInterval(update, 5000);
+
+    // Fetch immediately + poll every 3 seconds as safety net
+    fetchCartTotal();
+    setInterval(fetchCartTotal, 3000);
   }
 
   // ---- Sticky Mobile Add-to-Cart ----
