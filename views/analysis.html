@@ -95,6 +95,59 @@
   </div>
 </div>
 
+{% if pagespeed %}
+<!-- Real Google PageSpeed scores -->
+<div class="glass rounded-2xl p-6 mb-6">
+  <div class="flex items-center gap-3 mb-4">
+    <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-2xl">⚡</div>
+    <div>
+      <h2 class="text-xl font-black text-white">Google PageSpeed - تقييم حقيقي</h2>
+      <p class="text-xs text-slate-400">تقييم Lighthouse الفعلي من Google لمتجرك</p>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+    <div class="text-center">
+      <div class="score-ring {% if pagespeed.performance >= 70 %}score-good{% elif pagespeed.performance >= 40 %}score-mid{% else %}score-bad{% endif %}" style="width:64px;height:64px;font-size:1.2rem;border-width:4px">{{ pagespeed.performance }}</div>
+      <div class="text-xs text-slate-400 mt-2">⚡ الأداء</div>
+    </div>
+    <div class="text-center">
+      <div class="score-ring {% if pagespeed.seo >= 70 %}score-good{% elif pagespeed.seo >= 40 %}score-mid{% else %}score-bad{% endif %}" style="width:64px;height:64px;font-size:1.2rem;border-width:4px">{{ pagespeed.seo }}</div>
+      <div class="text-xs text-slate-400 mt-2">🔍 SEO</div>
+    </div>
+    <div class="text-center">
+      <div class="score-ring {% if pagespeed.accessibility >= 70 %}score-good{% elif pagespeed.accessibility >= 40 %}score-mid{% else %}score-bad{% endif %}" style="width:64px;height:64px;font-size:1.2rem;border-width:4px">{{ pagespeed.accessibility }}</div>
+      <div class="text-xs text-slate-400 mt-2">♿ الوصولية</div>
+    </div>
+    <div class="text-center">
+      <div class="score-ring {% if pagespeed.bestPractices >= 70 %}score-good{% elif pagespeed.bestPractices >= 40 %}score-mid{% else %}score-bad{% endif %}" style="width:64px;height:64px;font-size:1.2rem;border-width:4px">{{ pagespeed.bestPractices }}</div>
+      <div class="text-xs text-slate-400 mt-2">✅ أفضل الممارسات</div>
+    </div>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">
+    <div class="bg-slate-800/50 rounded-lg p-3">
+      <div class="text-xs text-slate-400 mb-1">LCP</div>
+      <div class="font-bold text-white text-sm">{{ pagespeed.lcp }}</div>
+    </div>
+    <div class="bg-slate-800/50 rounded-lg p-3">
+      <div class="text-xs text-slate-400 mb-1">FCP</div>
+      <div class="font-bold text-white text-sm">{{ pagespeed.fcp }}</div>
+    </div>
+    <div class="bg-slate-800/50 rounded-lg p-3">
+      <div class="text-xs text-slate-400 mb-1">CLS</div>
+      <div class="font-bold text-white text-sm">{{ pagespeed.cls }}</div>
+    </div>
+    <div class="bg-slate-800/50 rounded-lg p-3">
+      <div class="text-xs text-slate-400 mb-1">TBT</div>
+      <div class="font-bold text-white text-sm">{{ pagespeed.tbt }}</div>
+    </div>
+    <div class="bg-slate-800/50 rounded-lg p-3">
+      <div class="text-xs text-slate-400 mb-1">TTI</div>
+      <div class="font-bold text-white text-sm">{{ pagespeed.tti }}</div>
+    </div>
+  </div>
+</div>
+{% endif %}
+
 <!-- Tabs -->
 <div class="flex flex-wrap gap-2 mb-6">
   <button class="tab-btn active" onclick="showTab(event,'seo')">🔍 تدقيق SEO</button>

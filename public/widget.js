@@ -737,6 +737,249 @@
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
+  // ==================================================================
+  // SEO Fixer — injects missing on-page SEO into the live storefront
+  // (Schema.org, Open Graph, canonical, meta description, image alts)
+  // ==================================================================
+
+  function renderSeoFixer(opts) {
+    if (!opts.enabled) return;
+    try {
+      if (opts.canonical) injectCanonical();
+      if (opts.metaDescription) injectMetaDescription();
+      if (opts.openGraph) injectOpenGraph();
+      if (opts.twitterCards) injectTwitterCards();
+      if (opts.schemaOrganization) injectOrganizationSchema(opts);
+      if (opts.schemaProduct) injectProductSchema();
+      if (opts.schemaBreadcrumb) injectBreadcrumbSchema();
+      if (opts.schemaFAQ) injectFAQSchema(opts);
+      if (opts.imageAltFallback) fixImageAltTags();
+    } catch (e) {}
+    // Re-run after SPA navigation
+    if (window.salla && salla.event && salla.event.on) {
+      try {
+        salla.event.on("page::changed", function () {
+          setTimeout(function () { renderSeoFixer(opts); }, 300);
+        });
+      } catch (e) {}
+    }
+    // Watch for newly added images to fix alt tags
+    if (opts.imageAltFallback) {
+      new MutationObserver(function (muts) {
+        muts.forEach(function (m) {
+          m.addedNodes.forEach(function (node) {
+            if (node.nodeType !== 1) return;
+            if (node.tagName === "IMG") fixSingleImageAlt(node);
+            else if (node.querySelectorAll) node.querySelectorAll("img").forEach(fixSingleImageAlt);
+          });
+        });
+      }).observe(document.body, { childList: true, subtree: true });
+    }
+  }
+
+  function addOrUpdateTag(selector, factory) {
+    var existing = document.head.querySelector(selector);
+    if (existing && existing.dataset.alfa !== "1") return; // don't overwrite if site already set it
+    if (!existing) {
+      existing = factory();
+      existing.dataset.alfa = "1";
+      document.head.appendChild(existing);
+    }
+    return existing;
+  }
+
+  function injectCanonical() {
+    var existing = document.head.querySelector('link[rel="canonical"]');
+    if (existing) return;
+    var l = document.createElement("link");
+    l.rel = "canonical";
+    l.href = location.origin + location.pathname;
+    l.dataset.alfa = "1";
+    document.head.appendChild(l);
+  }
+
+  function injectMetaDescription() {
+    var existing = document.head.querySelector('meta[name="description"]');
+    if (existing && existing.content && existing.content.length > 50) return;
+    var desc = "";
+    var p = getCurrentProduct();
+    if (p.name) desc = p.name + (p.price ? " — " + p.price : "");
+    if (!desc) {
+      var pageDesc = document.body.textContent.replace(/\s+/g, " ").trim();
+      desc = pageDesc.substring(0, 155);
+    }
+    if (!desc) return;
+    if (!existing) {
+      existing = document.createElement("meta");
+      existing.name = "description";
+      document.head.appendChild(existing);
+    }
+    existing.content = desc.substring(0, 160);
+    existing.dataset.alfa = "1";
+  }
+
+  function injectOpenGraph() {
+    var info = getCurrentProduct();
+    var pageType = isProductPage() ? "product" : "website";
+    var title = info.name || document.title;
+    var image = info.image || (document.querySelector("img") || {}).src || "";
+    var description = (document.head.querySelector('meta[name="description"]') || {}).content || title;
+
+    var tags = {
+      "og:type": pageType,
+      "og:title": title,
+      "og:description": description,
+      "og:url": location.href,
+      "og:image": image,
+      "og:site_name": (window.salla && salla.config && salla.config.get && salla.config.get("store.name")) || document.title,
+    };
+    Object.keys(tags).forEach(function (key) {
+      if (!tags[key]) return;
+      var sel = 'meta[property="' + key + '"]';
+      var existing = document.head.querySelector(sel);
+      if (existing) return;
+      var m = document.createElement("meta");
+      m.setAttribute("property", key);
+      m.content = tags[key];
+      m.dataset.alfa = "1";
+      document.head.appendChild(m);
+    });
+  }
+
+  function injectTwitterCards() {
+    var info = getCurrentProduct();
+    var tags = {
+      "twitter:card": "summary_large_image",
+      "twitter:title": info.name || document.title,
+      "twitter:description": (document.head.querySelector('meta[name="description"]') || {}).content || "",
+      "twitter:image": info.image || (document.querySelector("img") || {}).src || "",
+    };
+    Object.keys(tags).forEach(function (key) {
+      if (!tags[key]) return;
+      if (document.head.querySelector('meta[name="' + key + '"]')) return;
+      var m = document.createElement("meta");
+      m.name = key;
+      m.content = tags[key];
+      m.dataset.alfa = "1";
+      document.head.appendChild(m);
+    });
+  }
+
+  function injectSchema(obj) {
+    var hash = JSON.stringify(obj).substring(0, 80);
+    if (document.head.querySelector('script[type="application/ld+json"][data-alfa-hash="' + hash + '"]')) return;
+    var s = document.createElement("script");
+    s.type = "application/ld+json";
+    s.dataset.alfa = "1";
+    s.setAttribute("data-alfa-hash", hash);
+    s.textContent = JSON.stringify(obj);
+    document.head.appendChild(s);
+  }
+
+  function injectOrganizationSchema(opts) {
+    var storeName = opts.storeName ||
+      (window.salla && salla.config && salla.config.get && salla.config.get("store.name")) ||
+      document.title;
+    var logo = opts.storeLogo || (document.querySelector('link[rel="icon"]') || {}).href || "";
+    var schema = {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      name: storeName,
+      url: location.origin,
+    };
+    if (logo) schema.logo = logo;
+    if (opts.organizationSameAs && opts.organizationSameAs.length) schema.sameAs = opts.organizationSameAs;
+    injectSchema(schema);
+  }
+
+  function injectProductSchema() {
+    if (!isProductPage()) return;
+    var info = getCurrentProduct();
+    if (!info.name) return;
+    var schema = {
+      "@context": "https://schema.org/",
+      "@type": "Product",
+      name: info.name,
+      url: location.href,
+    };
+    if (info.image) schema.image = info.image;
+    var descEl = document.head.querySelector('meta[name="description"]');
+    if (descEl && descEl.content) schema.description = descEl.content;
+    if (info.price) {
+      schema.offers = {
+        "@type": "Offer",
+        url: location.href,
+        priceCurrency: info.currency || "SAR",
+        price: String(info.price).replace(/[^\d.]/g, "") || "0",
+        availability: info.quantity > 0 ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
+      };
+    }
+    injectSchema(schema);
+  }
+
+  function injectBreadcrumbSchema() {
+    // Build breadcrumbs from URL path segments
+    var segments = location.pathname.split("/").filter(Boolean);
+    if (!segments.length) return;
+    var items = [{ "@type": "ListItem", position: 1, name: "الرئيسية", item: location.origin }];
+    var acc = location.origin;
+    segments.forEach(function (seg, i) {
+      acc += "/" + seg;
+      items.push({
+        "@type": "ListItem",
+        position: i + 2,
+        name: decodeURIComponent(seg).replace(/[-_]/g, " ").substring(0, 60),
+        item: acc,
+      });
+    });
+    injectSchema({
+      "@context": "https://schema.org",
+      "@type": "BreadcrumbList",
+      itemListElement: items,
+    });
+  }
+
+  function injectFAQSchema(opts) {
+    if (!opts.faqs || !opts.faqs.length) return;
+    injectSchema({
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: opts.faqs.map(function (f) {
+        return {
+          "@type": "Question",
+          name: f.q,
+          acceptedAnswer: { "@type": "Answer", text: f.a },
+        };
+      }),
+    });
+  }
+
+  function fixSingleImageAlt(img) {
+    if (!img || img.alt) return;
+    // Try to get a meaningful alt from the closest product card or page title
+    var card = img.closest("salla-product-card, .product-card, [class*='product-card']");
+    var name = "";
+    if (card) {
+      name = card.getAttribute("name") || card.getAttribute("title") || "";
+      if (!name) {
+        var titleEl = card.querySelector(".product-title, h3, h4");
+        if (titleEl) name = titleEl.textContent.trim();
+      }
+    }
+    if (!name) {
+      var info = getCurrentProduct();
+      if (info.name) name = info.name;
+    }
+    if (!name) name = document.title || "image";
+    img.alt = name.substring(0, 100);
+    img.dataset.alfaAlt = "1";
+  }
+
+  function fixImageAltTags() {
+    document.querySelectorAll("img:not([alt])").forEach(fixSingleImageAlt);
+    document.querySelectorAll('img[alt=""]').forEach(fixSingleImageAlt);
+  }
+
   // ---- Lead capture helper (POSTs email to our server) ----
   function saveLead(payload) {
     var storeId = getStoreId();
@@ -1208,6 +1451,7 @@
       injectStyles();
       // Performance boost runs FIRST so it tags existing images before they load
       try { applyPerformanceBoost(cfg.performanceBoost || {}); } catch (e) {}
+      try { renderSeoFixer(cfg.seoFixer || {}); } catch (e) {}
       try { renderWhatsApp(cfg.whatsapp || {}); } catch (e) {}
       try { renderShippingBar(cfg.freeShippingBar || {}); } catch (e) {}
       try { renderStickyCart(cfg.stickyCart || {}); } catch (e) {}

@@ -135,6 +135,22 @@ const DEFAULTS = {
     bgColor: "#ef4444",
     textColor: "#FFFFFF",
   },
+  seoFixer: {
+    enabled: false,
+    schemaProduct: true,
+    schemaOrganization: true,
+    schemaBreadcrumb: true,
+    schemaFAQ: false,
+    faqs: [],
+    openGraph: true,
+    twitterCards: true,
+    canonical: true,
+    metaDescription: true,
+    imageAltFallback: true,
+    storeName: "",
+    storeLogo: "",
+    organizationSameAs: [],
+  },
   liveOrderTicker: {
     enabled: false,
     messages: [
@@ -193,6 +209,7 @@ function mergeAll(raw) {
     stickyMobileCart: { ...DEFAULTS.stickyMobileCart, ...(raw.stickyMobileCart || {}) },
     wishlist: { ...DEFAULTS.wishlist, ...(raw.wishlist || {}) },
     liveOrderTicker: { ...DEFAULTS.liveOrderTicker, ...(raw.liveOrderTicker || {}) },
+    seoFixer: { ...DEFAULTS.seoFixer, ...(raw.seoFixer || {}) },
     customPopup: { ...DEFAULTS.customPopup, ...(raw.customPopup || {}) },
   };
 }
