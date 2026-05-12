@@ -994,72 +994,66 @@
     if (!opts.enabled) return;
 
     // === Hook into Salla's existing wishlist button ===
-    // Salla product cards already have a button with aria-label="Add or remove to wishlist".
-    // We DON'T add our own heart icon — we just listen for clicks on Salla's and
-    // mirror the action into our localStorage so the floating panel shows the items.
+    // We listen ONLY for explicit user clicks on the wishlist button —
+    // not Salla SDK events, because those fire for every item already in
+    // the wishlist on page load (inflating our count).
 
     function infoFromCard(card) {
       if (!card) return null;
+      // Look for a link that goes to a product page (path starts with /p<digits> or /products/)
       var link = card.querySelector('a[href*="/p"]') || card.querySelector("a[href]");
       if (!link || !link.href) return null;
+      // Reject if the link doesn't look like a product URL
+      if (!/\/(p\d+|product\/|products\/)/.test(link.pathname || link.href)) return null;
       var img = card.querySelector("img");
-      var nameEl = card.querySelector(".product-title, h3, h4, salla-product-title") || link;
+      // Find the title within THIS card only (not deeper containers)
+      var nameEl = card.querySelector(".product-title, h3.title, h4.title, salla-product-title");
+      if (!nameEl) nameEl = link;
+      // Take only the first text node so we don't get all-products text
+      var name = (nameEl.textContent || "").trim().split(/\s{2,}|\n/)[0].substring(0, 200);
       return {
         url: link.href,
-        name: (nameEl.textContent || "").trim(),
+        name: name,
         image: img ? img.src : "",
       };
     }
 
+    // Per-click debounce so the same product can't be double-counted
+    var lastClickTime = 0;
+    var lastClickUrl = "";
+
     function syncFromSallaClick(target) {
-      var card = target.closest("salla-product-card, .product-card, .product-item, [class*='product-card'], .product");
+      // Narrow card detection — only specific product card containers, not generic .product
+      var card = target.closest("salla-product-card") ||
+                 target.closest(".product-card") ||
+                 target.closest("[class*='product-card']") ||
+                 target.closest(".product-item");
       var info = card ? infoFromCard(card) : null;
-      // Fallback for product detail pages (no card around the button)
+      // Fallback for product detail pages (button outside a card)
       if (!info) {
         var p = getCurrentProduct();
         if (!p.name) return;
         info = { url: location.href, name: p.name, image: p.image };
       }
+      if (!info.url || !info.name) return;
+      // Debounce: ignore same URL within 600ms
+      var now = Date.now();
+      if (info.url === lastClickUrl && now - lastClickTime < 600) return;
+      lastClickTime = now;
+      lastClickUrl = info.url;
+
       toggleWishItem(info);
       updateCount();
       openOnce();
     }
 
-    // Click listener for Salla's wishlist buttons
+    // Click listener — only user-triggered clicks (event.isTrusted = true)
     document.addEventListener("click", function (e) {
-      var btn = e.target.closest('[aria-label="Add or remove to wishlist" i], [aria-label*="wishlist" i], [aria-label*="مفضلة"], [aria-label*="المفضلة"], salla-wishlist-button');
+      if (!e.isTrusted) return; // ignore programmatic clicks
+      var btn = e.target.closest('[aria-label="Add or remove to wishlist" i], [aria-label*="wishlist" i], [aria-label*="المفضلة"], [aria-label*="مفضلة"], salla-wishlist-button');
       if (!btn) return;
-      // Slight delay so Salla finishes its own toggle first
-      setTimeout(function () { syncFromSallaClick(btn); }, 50);
+      setTimeout(function () { syncFromSallaClick(btn); }, 100);
     }, true);
-
-    // Subscribe to Salla SDK events for the most reliable sync
-    if (window.salla && salla.event && salla.event.on) {
-      try {
-        salla.event.on("wishlist::added", function (data) {
-          var p = (data && (data.product || data.payload || data)) || {};
-          if (!p.name && !p.url) return;
-          var list = getWishlist();
-          var url = p.url || p.permalink || "";
-          if (!list.some(function (x) { return x.url === url; })) {
-            list.unshift({
-              url: url,
-              name: p.name || "",
-              image: p.image || (p.images && p.images[0]) || "",
-            });
-            setWishlist(list);
-            updateCount();
-          }
-        });
-        salla.event.on("wishlist::removed", function (data) {
-          var p = (data && (data.product || data.payload || data)) || {};
-          var url = p.url || p.permalink || "";
-          if (!url) return;
-          setWishlist(getWishlist().filter(function (x) { return x.url !== url; }));
-          updateCount();
-        });
-      } catch (e) {}
-    }
 
     // === Floating button + slide-in panel (unchanged) ===
     var btn = null, panel = null, countEl = null;
