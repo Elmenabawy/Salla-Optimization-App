@@ -610,6 +610,56 @@
     </div>
   </div>
 
+  <!-- SEO Auto-Fixer -->
+  <div class="glass rounded-2xl p-6" style="border:2px solid rgba(99,102,241,0.5);box-shadow:0 0 30px -5px rgba(99,102,241,0.3)">
+    <div class="flex items-start justify-between gap-4 mb-4">
+      <div>
+        <h2 class="text-xl font-bold mb-1" style="background:linear-gradient(135deg,#6366f1,#a855f7);-webkit-background-clip:text;background-clip:text;color:transparent">🔧 إصلاح SEO تلقائياً</h2>
+        <p class="text-sm text-slate-400">يحقن العلامات الضرورية في كل صفحة من متجرك: Schema.org، Open Graph، meta tags. يحسّن SEO فوراً</p>
+      </div>
+      <label class="f-switch"><input type="checkbox" id="f-seo-enabled"><span class="f-slider"></span></label>
+    </div>
+    <div class="space-y-2">
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-seo-schema-product" class="w-4 h-4 accent-indigo-500">
+        <div class="flex-1"><div class="font-bold text-sm text-white">📦 Schema.org للمنتجات</div><div class="text-xs text-slate-400">⭐ نجوم + سعر في نتائج جوجل</div></div>
+      </label>
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-seo-schema-org" class="w-4 h-4 accent-indigo-500">
+        <div class="flex-1"><div class="font-bold text-sm text-white">🏢 Schema.org للمتجر</div><div class="text-xs text-slate-400">اسم ولوجو متجرك في جوجل</div></div>
+      </label>
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-seo-schema-breadcrumb" class="w-4 h-4 accent-indigo-500">
+        <div class="flex-1"><div class="font-bold text-sm text-white">🍞 Breadcrumb Schema</div><div class="text-xs text-slate-400">مسار التنقل في جوجل</div></div>
+      </label>
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-seo-og" class="w-4 h-4 accent-indigo-500">
+        <div class="flex-1"><div class="font-bold text-sm text-white">📱 Open Graph</div><div class="text-xs text-slate-400">معاينات جميلة في واتساب وفيسبوك</div></div>
+      </label>
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-seo-twitter" class="w-4 h-4 accent-indigo-500">
+        <div class="flex-1"><div class="font-bold text-sm text-white">🐦 Twitter Cards</div><div class="text-xs text-slate-400">عرض غني على تويتر/X</div></div>
+      </label>
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-seo-canonical" class="w-4 h-4 accent-indigo-500">
+        <div class="flex-1"><div class="font-bold text-sm text-white">🔗 Canonical URLs</div><div class="text-xs text-slate-400">يمنع المحتوى المكرر</div></div>
+      </label>
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-seo-meta" class="w-4 h-4 accent-indigo-500">
+        <div class="flex-1"><div class="font-bold text-sm text-white">📝 Meta Description تلقائي</div><div class="text-xs text-slate-400">يضيف وصف ميتا للصفحات</div></div>
+      </label>
+      <label class="flex items-center gap-3 p-2 hover:bg-slate-700/30 rounded-lg cursor-pointer">
+        <input type="checkbox" id="f-seo-alt" class="w-4 h-4 accent-indigo-500">
+        <div class="flex-1"><div class="font-bold text-sm text-white">🖼️ Alt text للصور</div><div class="text-xs text-slate-400">تحسين SEO والوصولية</div></div>
+      </label>
+    </div>
+    <div class="grid md:grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-700">
+      <div><label class="f-label">اسم المتجر</label><input id="f-seo-store-name" type="text" class="f-input" placeholder="اسمك التجاري"></div>
+      <div><label class="f-label">رابط لوجو المتجر</label><input id="f-seo-store-logo" type="url" class="f-input" placeholder="https://..."></div>
+      <div class="md:col-span-2"><label class="f-label">روابط السوشيال (سطر لكل واحد)</label><textarea id="f-seo-same-as" class="f-input" rows="3" style="resize:vertical;font-family:inherit" placeholder="https://instagram.com/yourstore"></textarea></div>
+    </div>
+  </div>
+
   <!-- Performance Boost -->
   <div class="glass rounded-2xl p-6" style="border:2px solid rgba(16,185,129,0.4);box-shadow:0 0 30px -5px rgba(16,185,129,0.3)">
     <div class="flex items-start justify-between gap-4 mb-4">
@@ -938,6 +988,20 @@ function loadMyLeads(force) {
       $('f-lo-bg').value = s.liveOrderTicker.bgColor || '#FFFFFF';
       $('f-lo-text-color').value = s.liveOrderTicker.textColor || '#0f172a';
     }
+    if (s.seoFixer) {
+      $('f-seo-enabled').checked = !!s.seoFixer.enabled;
+      $('f-seo-schema-product').checked = s.seoFixer.schemaProduct !== false;
+      $('f-seo-schema-org').checked = s.seoFixer.schemaOrganization !== false;
+      $('f-seo-schema-breadcrumb').checked = s.seoFixer.schemaBreadcrumb !== false;
+      $('f-seo-og').checked = s.seoFixer.openGraph !== false;
+      $('f-seo-twitter').checked = s.seoFixer.twitterCards !== false;
+      $('f-seo-canonical').checked = s.seoFixer.canonical !== false;
+      $('f-seo-meta').checked = s.seoFixer.metaDescription !== false;
+      $('f-seo-alt').checked = s.seoFixer.imageAltFallback !== false;
+      $('f-seo-store-name').value = s.seoFixer.storeName || '';
+      $('f-seo-store-logo').value = s.seoFixer.storeLogo || '';
+      $('f-seo-same-as').value = (s.seoFixer.organizationSameAs || []).join('\n');
+    }
     if (s.performanceBoost) {
       $('f-pb-enabled').checked = !!s.performanceBoost.enabled;
       $('f-pb-lazy-images').checked = s.performanceBoost.lazyLoadImages !== false;
@@ -1080,6 +1144,20 @@ function loadMyLeads(force) {
         showEvery: parseInt($('f-lo-every').value, 10) || 12000,
         bgColor: $('f-lo-bg').value,
         textColor: $('f-lo-text-color').value,
+      },
+      seoFixer: {
+        enabled: $('f-seo-enabled').checked,
+        schemaProduct: $('f-seo-schema-product').checked,
+        schemaOrganization: $('f-seo-schema-org').checked,
+        schemaBreadcrumb: $('f-seo-schema-breadcrumb').checked,
+        openGraph: $('f-seo-og').checked,
+        twitterCards: $('f-seo-twitter').checked,
+        canonical: $('f-seo-canonical').checked,
+        metaDescription: $('f-seo-meta').checked,
+        imageAltFallback: $('f-seo-alt').checked,
+        storeName: $('f-seo-store-name').value.trim(),
+        storeLogo: $('f-seo-store-logo').value.trim(),
+        organizationSameAs: $('f-seo-same-as').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
       },
       performanceBoost: {
         enabled: $('f-pb-enabled').checked,
