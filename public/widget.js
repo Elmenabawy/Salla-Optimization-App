@@ -112,6 +112,30 @@
       ".alfa-trust{display:flex;flex-wrap:wrap;justify-content:center;gap:16px;padding:14px;border-radius:12px;margin:14px 0;font-family:system-ui,sans-serif}" +
       ".alfa-trust-item{display:flex;flex-direction:column;align-items:center;gap:4px;font-size:12px;font-weight:600;text-align:center;flex:1;min-width:80px}" +
       ".alfa-trust-icon{font-size:28px}" +
+      ".alfa-wheel{width:300px;height:300px;border-radius:50%;position:relative;margin:20px auto;transition:transform 4s cubic-bezier(.17,.67,.21,1.04);box-shadow:0 0 0 8px rgba(255,255,255,.2),0 10px 40px rgba(0,0,0,.3)}" +
+      ".alfa-wheel-arrow{position:absolute;top:-12px;left:50%;transform:translateX(-50%);width:0;height:0;border-left:14px solid transparent;border-right:14px solid transparent;border-top:24px solid #1f2937;z-index:2;filter:drop-shadow(0 2px 4px rgba(0,0,0,.3))}" +
+      ".alfa-wheel-slice{position:absolute;left:50%;top:0;width:50%;height:50%;transform-origin:0 100%;clip-path:polygon(0 0,100% 0,0 100%);display:flex;align-items:flex-start;justify-content:center;padding-top:30px;font-weight:900;color:#fff;font-size:14px}" +
+      ".alfa-gift-bar{position:fixed;left:0;right:0;padding:10px 20px;display:flex;align-items:center;gap:12px;font-family:system-ui,sans-serif;font-weight:700;font-size:13px;z-index:99998;box-shadow:0 2px 8px rgba(0,0,0,.1)}" +
+      ".alfa-gift-bar.top{top:0}.alfa-gift-bar.bottom{bottom:0}" +
+      ".alfa-gift-progress{flex:1;height:6px;background:rgba(255,255,255,.25);border-radius:3px;overflow:hidden}" +
+      ".alfa-gift-progress-fill{height:100%;transition:width .4s ease;border-radius:3px}" +
+      ".alfa-mobile-cart{position:fixed;bottom:0;left:0;right:0;padding:12px;display:none;justify-content:space-between;align-items:center;font-family:system-ui,sans-serif;z-index:99996;box-shadow:0 -4px 16px rgba(0,0,0,.12);gap:12px}" +
+      "@media (max-width:768px){.alfa-mobile-cart{display:flex}}" +
+      ".alfa-mobile-cart-btn{flex:1;padding:14px;border:none;border-radius:10px;font-weight:800;font-size:15px;cursor:pointer;font-family:inherit}" +
+      ".alfa-mobile-cart-qty{display:flex;align-items:center;gap:8px;background:rgba(255,255,255,.2);border-radius:10px;padding:6px 8px;color:#fff}" +
+      ".alfa-mobile-cart-qty button{background:rgba(255,255,255,.3);border:none;color:#fff;width:32px;height:32px;border-radius:8px;font-size:18px;cursor:pointer;font-weight:700}" +
+      ".alfa-wish-btn{position:fixed;bottom:90px;right:20px;width:54px;height:54px;border-radius:50%;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:22px;box-shadow:0 4px 14px rgba(0,0,0,.18);z-index:99995;border:none;transition:transform .2s}" +
+      ".alfa-wish-btn:hover{transform:scale(1.08)}" +
+      ".alfa-wish-count{position:absolute;top:-4px;right:-4px;background:#fff;color:#ef4444;font-size:11px;font-weight:900;padding:2px 6px;border-radius:9999px;min-width:20px;text-align:center}" +
+      ".alfa-wish-heart{position:absolute;top:8px;right:8px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.6);color:#fff;border:none;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;z-index:10;transition:all .2s}" +
+      ".alfa-wish-heart:hover{transform:scale(1.1)}" +
+      ".alfa-wish-heart.active{background:#ef4444}" +
+      ".alfa-wish-panel{position:fixed;top:0;right:0;bottom:0;width:380px;max-width:90vw;background:#fff;color:#0f172a;box-shadow:-8px 0 30px rgba(0,0,0,.18);z-index:99999;transform:translateX(100%);transition:transform .3s;display:flex;flex-direction:column;font-family:system-ui,sans-serif}" +
+      ".alfa-wish-panel.open{transform:translateX(0)}" +
+      ".alfa-wish-head{padding:18px;border-bottom:1px solid #e2e8f0;display:flex;justify-content:space-between;align-items:center;font-weight:800}" +
+      ".alfa-wish-list{flex:1;overflow-y:auto;padding:12px}" +
+      ".alfa-wish-item{display:flex;gap:12px;padding:10px;border-bottom:1px solid #f1f5f9;text-decoration:none;color:inherit}" +
+      ".alfa-wish-item img{width:60px;height:60px;border-radius:8px;object-fit:cover}" +
       "@keyframes alfaFade{from{opacity:0}to{opacity:1}}";
     document.head.appendChild(s);
   }
@@ -710,6 +734,238 @@
     observer.observe(document.body, { childList: true, subtree: true });
   }
 
+  // ---- Spin-the-Wheel Discount Popup ----
+  function renderSpinWheel(opts) {
+    if (!opts.enabled) return;
+    if (!shouldShow("spin-wheel", opts.showOnce || "session")) return;
+    setTimeout(function () { openSpinWheel(opts); }, (opts.showAfterSeconds || 15) * 1000);
+  }
+  function openSpinWheel(opts) {
+    var slices = opts.slices || [];
+    if (!slices.length) return;
+    var overlay = document.createElement("div");
+    overlay.className = "alfa-overlay";
+    var popup = document.createElement("div");
+    popup.className = "alfa-popup";
+    popup.style.background = opts.bgColor || "#0d9488";
+    popup.style.color = opts.textColor || "#fff";
+    popup.style.position = "relative";
+    popup.style.maxWidth = "440px";
+    var sliceAngle = 360 / slices.length;
+    var sliceHTML = "";
+    slices.forEach(function (label, i) {
+      var bg = (opts.winColors && opts.winColors[i]) || "#10b981";
+      sliceHTML += '<div class="alfa-wheel-slice" style="transform:rotate(' + (i * sliceAngle) + 'deg) skewY(' + -(90 - sliceAngle) + 'deg);background:' + bg + '"><span style="transform:skewY(' + (90 - sliceAngle) + 'deg) rotate(' + (sliceAngle / 2) + 'deg);position:absolute;top:24px">' + label + "</span></div>";
+    });
+    popup.innerHTML =
+      '<button class="alfa-popup-close" aria-label="إغلاق">×</button>' +
+      '<div class="alfa-popup-body" style="padding:24px">' +
+      '<div class="alfa-popup-title">' + (opts.title || "🎁 جرّب حظك") + "</div>" +
+      '<div class="alfa-popup-text">' + (opts.subtitle || "أدخل بريدك وأدر العجلة") + "</div>" +
+      '<input type="email" id="alfa-sw-email" placeholder="بريدك الإلكتروني" style="width:100%;padding:12px;border-radius:10px;border:none;font-size:14px;margin-bottom:12px;text-align:center;font-family:inherit;color:#0f172a">' +
+      '<div style="position:relative">' +
+      '<div class="alfa-wheel-arrow"></div>' +
+      '<div class="alfa-wheel" id="alfa-sw-wheel">' + sliceHTML + "</div>" +
+      "</div>" +
+      '<button class="alfa-popup-btn" id="alfa-sw-spin" style="background:#fff;color:' + (opts.bgColor || "#0d9488") + ';margin-top:12px">' + (opts.buttonText || "أدر العجلة") + "</button>" +
+      '<div id="alfa-sw-result" style="margin-top:14px;font-size:18px;font-weight:900"></div>' +
+      "</div>";
+    overlay.appendChild(popup);
+    document.body.appendChild(overlay);
+    function close() { overlay.style.transition = "opacity .25s"; overlay.style.opacity = "0"; setTimeout(function () { overlay.remove(); }, 250); }
+    overlay.addEventListener("click", function (e) { if (e.target === overlay) close(); });
+    popup.querySelector(".alfa-popup-close").addEventListener("click", close);
+    var spun = false;
+    popup.querySelector("#alfa-sw-spin").addEventListener("click", function () {
+      if (spun) return;
+      var email = popup.querySelector("#alfa-sw-email").value.trim();
+      if (!email || email.indexOf("@") === -1) { popup.querySelector("#alfa-sw-email").style.border = "2px solid #ef4444"; return; }
+      spun = true;
+      var winnerIdx = pickWinnerIndex(slices);
+      var rotations = 5;
+      var degrees = rotations * 360 + (360 - winnerIdx * sliceAngle - sliceAngle / 2);
+      var wheel = popup.querySelector("#alfa-sw-wheel");
+      wheel.style.transform = "rotate(" + degrees + "deg)";
+      this.disabled = true;
+      this.style.opacity = ".5";
+      setTimeout(function () {
+        var label = slices[winnerIdx];
+        var winning = label && !/خسرت|loss/i.test(label);
+        popup.querySelector("#alfa-sw-result").innerHTML = winning
+          ? "🎉 ربحت خصم <span style='color:#fbbf24'>" + label + "</span>! تم إرسال الكوبون لبريدك"
+          : "💔 حظ أوفر المرة القادمة";
+        // Optionally POST email + result back to your server for follow-up
+      }, 4200);
+    });
+  }
+  function pickWinnerIndex(slices) {
+    // Weighted toward better outcomes (slight house edge — adjust as needed)
+    return Math.floor(Math.random() * slices.length);
+  }
+
+  // ---- Free Gift Threshold Bar ----
+  function renderFreeGiftBar(opts) {
+    if (!opts.enabled) return;
+    function getCartTotal() {
+      try {
+        if (window.salla && salla.cart && typeof salla.cart.getTotal === "function") {
+          return Number(salla.cart.getTotal()) || 0;
+        }
+        if (window.salla && salla.config && salla.config.get) {
+          return Number(salla.config.get("cart.total") || 0) || 0;
+        }
+      } catch (e) {}
+      // Fallback: scrape from DOM
+      var el = document.querySelector(".cart-total, salla-cart-summary [data-total]");
+      if (el) {
+        var m = el.textContent.match(/[\d,.]+/);
+        if (m) return parseFloat(m[0].replace(/,/g, "")) || 0;
+      }
+      return 0;
+    }
+    var bar = document.createElement("div");
+    bar.className = "alfa-gift-bar " + (opts.position === "bottom" ? "bottom" : "top");
+    bar.style.background = opts.bgColor || "#0d9488";
+    bar.style.color = opts.textColor || "#fff";
+    document.body.appendChild(bar);
+    function update() {
+      var total = getCartTotal();
+      var threshold = opts.threshold || 200;
+      var pct = Math.min(100, (total / threshold) * 100);
+      var remaining = Math.max(0, threshold - total).toFixed(2);
+      var text = total >= threshold
+        ? (opts.textReached || "🎉 رائع! أضفنا الهدية المجانية إلى طلبك")
+        : (opts.textBelow || "أضف {remaining} {currency} للحصول على هدية مجانية 🎁")
+            .replace("{remaining}", remaining)
+            .replace("{currency}", opts.currency || "ر.س");
+      bar.innerHTML =
+        '<span>' + text + '</span>' +
+        '<div class="alfa-gift-progress"><div class="alfa-gift-progress-fill" style="width:' + pct + '%;background:' + (opts.progressColor || "#fbbf24") + '"></div></div>' +
+        '<span style="font-weight:900">' + Math.round(pct) + "%</span>";
+    }
+    update();
+    if (window.salla && salla.event && salla.event.on) {
+      try { salla.event.on("cart::updated", update); salla.event.on("cart::item.added", update); } catch (e) {}
+    }
+    setInterval(update, 5000);
+  }
+
+  // ---- Sticky Mobile Add-to-Cart ----
+  function renderStickyMobileCart(opts) {
+    if (!opts.enabled || !isProductPage()) return;
+    var bar = document.createElement("div");
+    bar.className = "alfa-mobile-cart";
+    bar.style.background = opts.bgColor || "#0d9488";
+    bar.style.color = opts.textColor || "#fff";
+    var qtyHTML = opts.showQuantity
+      ? '<div class="alfa-mobile-cart-qty"><button id="alfa-mc-minus">−</button><span id="alfa-mc-qty">1</span><button id="alfa-mc-plus">+</button></div>'
+      : "";
+    bar.innerHTML = qtyHTML + '<button class="alfa-mobile-cart-btn" style="background:rgba(255,255,255,.95);color:' + (opts.bgColor || "#0d9488") + '">' + (opts.addToCartText || "أضف للسلة 🛒") + "</button>";
+    document.body.appendChild(bar);
+    if (opts.showQuantity) {
+      var q = 1, qEl = bar.querySelector("#alfa-mc-qty");
+      bar.querySelector("#alfa-mc-minus").onclick = function () { if (q > 1) qEl.textContent = --q; };
+      bar.querySelector("#alfa-mc-plus").onclick = function () { qEl.textContent = ++q; };
+    }
+    bar.querySelector(".alfa-mobile-cart-btn").onclick = function () {
+      var realBtn = document.querySelector("salla-add-product-button, .add-to-cart, .product-add-to-cart");
+      if (realBtn) realBtn.click();
+      else { var info = getCurrentProduct(); if (info.id && window.salla && salla.cart && salla.cart.addItem) salla.cart.addItem(info.id, q); }
+    };
+  }
+
+  // ---- Wishlist (localStorage) ----
+  var WL_KEY = "alfa-wishlist";
+  function getWishlist() { try { return JSON.parse(localStorage.getItem(WL_KEY) || "[]"); } catch (e) { return []; } }
+  function setWishlist(list) { try { localStorage.setItem(WL_KEY, JSON.stringify(list)); } catch (e) {} }
+  function toggleWishItem(item) {
+    var list = getWishlist();
+    var idx = list.findIndex(function (x) { return x.url === item.url; });
+    if (idx >= 0) list.splice(idx, 1); else list.unshift(item);
+    setWishlist(list);
+    return idx < 0;
+  }
+  function renderWishlist(opts) {
+    if (!opts.enabled) return;
+    // Add heart icons to product cards
+    function addHearts() {
+      document.querySelectorAll("salla-product-card, .product-card, .product-item, [class*='product-card']").forEach(function (card) {
+        if (card.dataset.alfaWish) return;
+        card.dataset.alfaWish = "1";
+        var link = card.querySelector("a");
+        if (!link) return;
+        var url = link.href;
+        var img = card.querySelector("img");
+        var name = (card.querySelector(".product-title, h3, h4") || link).textContent.trim();
+        var heart = document.createElement("button");
+        heart.className = "alfa-wish-heart";
+        heart.innerHTML = "♥";
+        if (getWishlist().some(function (x) { return x.url === url; })) heart.classList.add("active");
+        card.style.position = "relative";
+        heart.addEventListener("click", function (e) {
+          e.preventDefault(); e.stopPropagation();
+          var added = toggleWishItem({ url: url, name: name, image: img ? img.src : "" });
+          heart.classList.toggle("active", added);
+          updateCount();
+        });
+        card.appendChild(heart);
+      });
+    }
+    // Floating button
+    var btn = null, panel = null, countEl = null;
+    if (opts.floatingButton) {
+      btn = document.createElement("button");
+      btn.className = "alfa-wish-btn";
+      btn.style.background = opts.bgColor || "#ef4444";
+      btn.style.color = opts.textColor || "#fff";
+      btn.innerHTML = (opts.buttonText || "❤️") + '<span class="alfa-wish-count" id="alfa-wl-count">0</span>';
+      document.body.appendChild(btn);
+      countEl = btn.querySelector("#alfa-wl-count");
+      btn.addEventListener("click", function () { openWishPanel(); });
+    }
+    function updateCount() {
+      var c = getWishlist().length;
+      if (countEl) { countEl.textContent = c; countEl.style.display = c ? "" : "none"; }
+    }
+    function openWishPanel() {
+      if (!panel) {
+        panel = document.createElement("div");
+        panel.className = "alfa-wish-panel";
+        panel.innerHTML = '<div class="alfa-wish-head"><span>❤️ قائمة المفضلة</span><button style="background:none;border:none;cursor:pointer;font-size:24px">×</button></div><div class="alfa-wish-list" id="alfa-wish-list"></div>';
+        document.body.appendChild(panel);
+        panel.querySelector("button").addEventListener("click", function () { panel.classList.remove("open"); });
+      }
+      var list = getWishlist();
+      panel.querySelector("#alfa-wish-list").innerHTML = list.length
+        ? list.map(function (p) { return '<a class="alfa-wish-item" href="' + p.url + '">' + (p.image ? '<img src="' + p.image + '">' : "") + '<div style="flex:1"><div style="font-weight:600;font-size:13px">' + p.name + "</div></div></a>"; }).join("")
+        : '<div style="text-align:center;padding:40px;color:#94a3b8">قائمتك فارغة</div>';
+      panel.classList.add("open");
+    }
+    updateCount();
+    addHearts();
+    new MutationObserver(addHearts).observe(document.body, { childList: true, subtree: true });
+  }
+
+  // ---- Live Order Ticker ----
+  function renderLiveOrderTicker(opts) {
+    if (!opts.enabled) return;
+    var msgs = (opts.messages || []).filter(Boolean);
+    if (!msgs.length) return;
+    var idx = 0;
+    function tick() {
+      var t = document.createElement("div");
+      t.className = "alfa-toast " + (opts.position === "bottom-right" ? "r" : "l");
+      t.style.background = opts.bgColor || "#FFFFFF";
+      t.style.color = opts.textColor || "#0f172a";
+      t.innerHTML = '<span style="font-size:22px">🛍️</span><span>' + msgs[idx] + "</span>";
+      document.body.appendChild(t);
+      setTimeout(function () { t.style.transition = "opacity .4s,transform .4s"; t.style.opacity = "0"; t.style.transform = "translateY(20px)"; setTimeout(function () { t.remove(); }, 400); }, (opts.showEvery || 12000) - 1500);
+      idx = (idx + 1) % msgs.length;
+    }
+    setTimeout(tick, 4000);
+    setInterval(tick, opts.showEvery || 12000);
+  }
+
   function init() {
     fetchConfig(function (cfg) {
       if (!cfg) return;
@@ -727,6 +983,11 @@
       try { renderRecentlyViewed(cfg.recentlyViewed || {}); } catch (e) {}
       try { renderExitIntent(cfg.exitIntent || {}); } catch (e) {}
       try { renderCustomPopup(cfg.customPopup || {}); } catch (e) {}
+      try { renderSpinWheel(cfg.spinWheel || {}); } catch (e) {}
+      try { renderFreeGiftBar(cfg.freeGiftBar || {}); } catch (e) {}
+      try { renderStickyMobileCart(cfg.stickyMobileCart || {}); } catch (e) {}
+      try { renderWishlist(cfg.wishlist || {}); } catch (e) {}
+      try { renderLiveOrderTicker(cfg.liveOrderTicker || {}); } catch (e) {}
     });
   }
 

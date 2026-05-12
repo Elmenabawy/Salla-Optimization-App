@@ -542,6 +542,98 @@
       </div>
     </div>
 
+    <!-- Spin-the-Wheel -->
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">🎰 عجلة الحظ (Spin-the-Wheel)</h3>
+          <p class="text-sm text-slate-500">نافذة تفاعلية لجمع البريد الإلكتروني مع فرصة لربح خصم — أعلى معدل تحويل لجمع الإيميلات</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="sw-enabled"><span class="slider"></span></label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">العنوان</label><input id="sw-title" type="text" class="input"></div>
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">العنوان الفرعي</label><input id="sw-subtitle" type="text" class="input"></div>
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">الجوائز (سطر لكل واحدة - اكتب "خسرت" للخسارة)</label><textarea id="sw-slices" class="input" rows="4" style="resize:vertical;font-family:inherit"></textarea></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">تظهر بعد (ثانية)</label><input id="sw-delay" type="number" min="0" class="input"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">تكرار الظهور</label><select id="sw-once" class="input"><option value="session">جلسة</option><option value="day">يوم</option><option value="always">دائماً</option></select></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون الخلفية</label><input id="sw-bg" type="color" class="input" style="height:38px;padding:2px"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون النص</label><input id="sw-text-color" type="color" class="input" style="height:38px;padding:2px"></div>
+      </div>
+    </div>
+
+    <!-- Free Gift Threshold Bar -->
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">🎁 شريط الهدية المجانية</h3>
+          <p class="text-sm text-slate-500">يحفز رفع قيمة السلة بإظهار شريط تقدّم: "أضف X ر.س للحصول على هدية"</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="gb-enabled"><span class="slider"></span></label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">الحد الأدنى</label><input id="gb-threshold" type="number" min="1" class="input"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">العملة</label><input id="gb-currency" type="text" class="input"></div>
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">نص قبل الوصول ({remaining} و {currency})</label><input id="gb-text-below" type="text" class="input"></div>
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">نص بعد الوصول</label><input id="gb-text-reached" type="text" class="input"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">الموقع</label><select id="gb-position" class="input"><option value="top">أعلى</option><option value="bottom">أسفل</option></select></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون التقدم</label><input id="gb-progress" type="color" class="input" style="height:38px;padding:2px"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون الخلفية</label><input id="gb-bg" type="color" class="input" style="height:38px;padding:2px"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون النص</label><input id="gb-text-color" type="color" class="input" style="height:38px;padding:2px"></div>
+      </div>
+    </div>
+
+    <!-- Sticky Mobile Cart -->
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">📱 زر السلة الثابت للموبايل</h3>
+          <p class="text-sm text-slate-500">شريط أسفل الشاشة على الموبايل في صفحات المنتج — يرفع تحويل الجوال بنسبة 15٪+</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="mc-enabled"><span class="slider"></span></label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">نص الزر</label><input id="mc-text" type="text" class="input"></div>
+        <div class="md:col-span-2"><label class="flex items-center gap-2 text-sm"><input type="checkbox" id="mc-qty" class="w-4 h-4"><span>إظهار محدد الكمية</span></label></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون الخلفية</label><input id="mc-bg" type="color" class="input" style="height:38px;padding:2px"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون النص</label><input id="mc-text-color" type="color" class="input" style="height:38px;padding:2px"></div>
+      </div>
+    </div>
+
+    <!-- Wishlist -->
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">❤️ قائمة المفضلة</h3>
+          <p class="text-sm text-slate-500">يظهر زر قلب على كل بطاقة منتج + زر عائم لعرض القائمة — يزيد عودة العملاء</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="wl-enabled"><span class="slider"></span></label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="md:col-span-2"><label class="flex items-center gap-2 text-sm"><input type="checkbox" id="wl-floating" class="w-4 h-4"><span>إظهار الزر العائم</span></label></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون الخلفية</label><input id="wl-bg" type="color" class="input" style="height:38px;padding:2px"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون النص</label><input id="wl-text-color" type="color" class="input" style="height:38px;padding:2px"></div>
+      </div>
+    </div>
+
+    <!-- Live Order Ticker -->
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">🛍️ شريط الطلبات الحية</h3>
+          <p class="text-sm text-slate-500">إشعارات: "أحمد من الرياض اشترى منذ 3 دقائق" — أقوى إثبات اجتماعي للسوق السعودي</p>
+        </div>
+        <label class="switch"><input type="checkbox" id="lo-enabled"><span class="slider"></span></label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="md:col-span-2"><label class="text-xs font-semibold text-slate-600 mb-1 block">الرسائل (سطر لكل واحدة)</label><textarea id="lo-messages" class="input" rows="5" style="resize:vertical;font-family:inherit"></textarea></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">الموقع</label><select id="lo-position" class="input"><option value="bottom-left">يسار الأسفل</option><option value="bottom-right">يمين الأسفل</option></select></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">المدة بين الإشعارات (ms)</label><input id="lo-every" type="number" min="5000" step="1000" class="input"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون الخلفية</label><input id="lo-bg" type="color" class="input" style="height:38px;padding:2px"></div>
+        <div><label class="text-xs font-semibold text-slate-600 mb-1 block">لون النص</label><input id="lo-text-color" type="color" class="input" style="height:38px;padding:2px"></div>
+      </div>
+    </div>
+
     <!-- Performance Boost -->
     <div class="card p-5" style="border:2px solid #10b981;background:linear-gradient(135deg,#f0fdfa,#ecfeff)">
       <div class="flex items-start justify-between gap-4 mb-4">
@@ -779,6 +871,48 @@ function t(e, name) {
       $('ei-bg').value = s.exitIntent.bgColor || '#0d9488';
       $('ei-text-color').value = s.exitIntent.textColor || '#FFFFFF';
     }
+    if (s.spinWheel) {
+      $('sw-enabled').checked = !!s.spinWheel.enabled;
+      $('sw-title').value = s.spinWheel.title || '';
+      $('sw-subtitle').value = s.spinWheel.subtitle || '';
+      $('sw-slices').value = (s.spinWheel.slices || []).join('\n');
+      $('sw-delay').value = s.spinWheel.showAfterSeconds || 15;
+      $('sw-once').value = s.spinWheel.showOnce || 'session';
+      $('sw-bg').value = s.spinWheel.bgColor || '#0d9488';
+      $('sw-text-color').value = s.spinWheel.textColor || '#FFFFFF';
+    }
+    if (s.freeGiftBar) {
+      $('gb-enabled').checked = !!s.freeGiftBar.enabled;
+      $('gb-threshold').value = s.freeGiftBar.threshold || 200;
+      $('gb-currency').value = s.freeGiftBar.currency || 'ر.س';
+      $('gb-text-below').value = s.freeGiftBar.textBelow || '';
+      $('gb-text-reached').value = s.freeGiftBar.textReached || '';
+      $('gb-position').value = s.freeGiftBar.position || 'top';
+      $('gb-progress').value = s.freeGiftBar.progressColor || '#fbbf24';
+      $('gb-bg').value = s.freeGiftBar.bgColor || '#0d9488';
+      $('gb-text-color').value = s.freeGiftBar.textColor || '#FFFFFF';
+    }
+    if (s.stickyMobileCart) {
+      $('mc-enabled').checked = !!s.stickyMobileCart.enabled;
+      $('mc-text').value = s.stickyMobileCart.addToCartText || '';
+      $('mc-qty').checked = s.stickyMobileCart.showQuantity !== false;
+      $('mc-bg').value = s.stickyMobileCart.bgColor || '#0d9488';
+      $('mc-text-color').value = s.stickyMobileCart.textColor || '#FFFFFF';
+    }
+    if (s.wishlist) {
+      $('wl-enabled').checked = !!s.wishlist.enabled;
+      $('wl-floating').checked = s.wishlist.floatingButton !== false;
+      $('wl-bg').value = s.wishlist.bgColor || '#ef4444';
+      $('wl-text-color').value = s.wishlist.textColor || '#FFFFFF';
+    }
+    if (s.liveOrderTicker) {
+      $('lo-enabled').checked = !!s.liveOrderTicker.enabled;
+      $('lo-messages').value = (s.liveOrderTicker.messages || []).join('\n');
+      $('lo-position').value = s.liveOrderTicker.position || 'bottom-left';
+      $('lo-every').value = s.liveOrderTicker.showEvery || 12000;
+      $('lo-bg').value = s.liveOrderTicker.bgColor || '#FFFFFF';
+      $('lo-text-color').value = s.liveOrderTicker.textColor || '#0f172a';
+    }
     if (s.performanceBoost) {
       $('pb-enabled').checked = !!s.performanceBoost.enabled;
       $('pb-lazy-images').checked = s.performanceBoost.lazyLoadImages !== false;
@@ -973,6 +1107,48 @@ function t(e, name) {
           showOnce: $('ei-once').value,
           bgColor: $('ei-bg').value,
           textColor: $('ei-text-color').value,
+        },
+        spinWheel: {
+          enabled: $('sw-enabled').checked,
+          title: $('sw-title').value.trim(),
+          subtitle: $('sw-subtitle').value.trim(),
+          slices: $('sw-slices').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
+          showAfterSeconds: parseInt($('sw-delay').value, 10) || 15,
+          showOnce: $('sw-once').value,
+          bgColor: $('sw-bg').value,
+          textColor: $('sw-text-color').value,
+        },
+        freeGiftBar: {
+          enabled: $('gb-enabled').checked,
+          threshold: parseInt($('gb-threshold').value, 10) || 200,
+          currency: $('gb-currency').value.trim(),
+          textBelow: $('gb-text-below').value.trim(),
+          textReached: $('gb-text-reached').value.trim(),
+          position: $('gb-position').value,
+          progressColor: $('gb-progress').value,
+          bgColor: $('gb-bg').value,
+          textColor: $('gb-text-color').value,
+        },
+        stickyMobileCart: {
+          enabled: $('mc-enabled').checked,
+          addToCartText: $('mc-text').value.trim(),
+          showQuantity: $('mc-qty').checked,
+          bgColor: $('mc-bg').value,
+          textColor: $('mc-text-color').value,
+        },
+        wishlist: {
+          enabled: $('wl-enabled').checked,
+          floatingButton: $('wl-floating').checked,
+          bgColor: $('wl-bg').value,
+          textColor: $('wl-text-color').value,
+        },
+        liveOrderTicker: {
+          enabled: $('lo-enabled').checked,
+          messages: $('lo-messages').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
+          position: $('lo-position').value,
+          showEvery: parseInt($('lo-every').value, 10) || 12000,
+          bgColor: $('lo-bg').value,
+          textColor: $('lo-text-color').value,
         },
         performanceBoost: {
           enabled: $('pb-enabled').checked,
