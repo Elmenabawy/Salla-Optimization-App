@@ -532,6 +532,7 @@ app.get("/embed", async function (req, res) {
   const settings = merchantId ? loadSettings(merchantId) : null;
   res.render("embed.html", {
     analysis: data.analysis,
+    pagespeed: data.pagespeed || null,
     analyzedAt: new Date(data.analyzedAt).toLocaleString("ar-SA"),
     productsAnalyzed: data.productsAnalyzed,
     isReal: isReal,
@@ -580,6 +581,7 @@ app.get("/analysis", ensureAuthenticated, async function (req, res) {
   res.render("analysis.html", {
     isLogin: req.user,
     analysis: saved?.analysis || null,
+    pagespeed: saved?.pagespeed || null,
     analyzedAt: saved?.analyzedAt ? new Date(saved.analyzedAt).toLocaleString('ar-SA') : null,
     productsAnalyzed: saved?.productsAnalyzed || 0,
     pending: false,

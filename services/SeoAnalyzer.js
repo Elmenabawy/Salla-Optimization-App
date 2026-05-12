@@ -21,6 +21,49 @@ function loadAnalysis(merchantId) {
   try { return JSON.parse(fs.readFileSync(file, 'utf8')); } catch { return null; }
 }
 
+// ============================================================
+// Google PageSpeed Insights — real Core Web Vitals + SEO audit
+// Free API, no key required (optional key for higher quota)
+// ============================================================
+async function fetchPageSpeed(storeUrl) {
+  if (!storeUrl) return null;
+  const params = new URLSearchParams({
+    url: storeUrl,
+    strategy: "mobile",
+  });
+  ["performance", "seo", "accessibility", "best-practices"].forEach((c) => params.append("category", c));
+  if (process.env.GOOGLE_PAGESPEED_API_KEY) params.set("key", process.env.GOOGLE_PAGESPEED_API_KEY);
+
+  const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?${params}`;
+  try {
+    console.log(`[PageSpeed] Auditing ${storeUrl} ...`);
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 30000);
+    const res = await fetch(apiUrl, { signal: ctrl.signal });
+    clearTimeout(timeout);
+    if (!res.ok) throw new Error(`PageSpeed API ${res.status}`);
+    const data = await res.json();
+    const lh = data.lighthouseResult || {};
+    const cats = lh.categories || {};
+    const audits = lh.audits || {};
+    return {
+      performance: Math.round((cats.performance?.score || 0) * 100),
+      seo: Math.round((cats.seo?.score || 0) * 100),
+      accessibility: Math.round((cats.accessibility?.score || 0) * 100),
+      bestPractices: Math.round((cats["best-practices"]?.score || 0) * 100),
+      lcp: audits["largest-contentful-paint"]?.displayValue || "—",
+      fcp: audits["first-contentful-paint"]?.displayValue || "—",
+      cls: audits["cumulative-layout-shift"]?.displayValue || "—",
+      tbt: audits["total-blocking-time"]?.displayValue || "—",
+      tti: audits["interactive"]?.displayValue || "—",
+      analyzedUrl: storeUrl,
+    };
+  } catch (err) {
+    console.error("[PageSpeed] failed:", err.message);
+    return null;
+  }
+}
+
 async function fetchStoreData(SallaAPI, accessToken) {
   const [products, storeInfo, categories] = await Promise.allSettled([
     SallaAPI.fetchResource({ url: 'https://api.salla.dev/admin/v2/products?per_page=20', token: accessToken }),
@@ -381,25 +424,48 @@ function buildAISuggestions(storeData) {
   return { product_titles, meta_descriptions, cta_improvements };
 }
 
+function getStoreUrl(storeData) {
+  const info = storeData.storeInfo?.data || storeData.storeInfo || {};
+  return info.domain ||
+    info.url ||
+    (info.username ? `https://${info.username}.salla.sa` : null) ||
+    (info.subdomain ? `https://${info.subdomain}.salla.sa` : null);
+}
+
 async function analyzeStore(merchantId, SallaAPI, accessToken) {
   console.log(`[SEO Analyzer] Analyzing store for merchant ${merchantId}...`);
 
   const storeData = await fetchStoreData(SallaAPI, accessToken);
+  const storeUrl = getStoreUrl(storeData);
+
+  // Run rule-based analysis + real PageSpeed audit in parallel
+  const [pagespeed] = await Promise.all([fetchPageSpeed(storeUrl)]);
 
   const seo_audit = analyzeSEO(storeData);
   const cro_analysis = analyzeCRO(storeData);
   const action_plan = buildActionPlan(seo_audit, cro_analysis);
   const ai_suggestions = buildAISuggestions(storeData);
 
+  // Combine our rule-based SEO score with Google's real SEO score (weighted 50/50)
+  if (pagespeed) {
+    seo_audit.realSeoScore = pagespeed.seo;
+    seo_audit.combinedScore = Math.round((seo_audit.score + pagespeed.seo) / 2);
+  }
+
   const result = {
     merchantId,
     analyzedAt: new Date().toISOString(),
     productsAnalyzed: (storeData.products?.data || storeData.products || []).length,
+    storeUrl: storeUrl,
+    pagespeed: pagespeed,
     analysis: { seo_audit, cro_analysis, action_plan, ai_suggestions },
   };
 
   saveAnalysis(merchantId, result);
-  console.log(`[SEO Analyzer] Analysis complete: SEO=${seo_audit.score}/100, CRO=${cro_analysis.score}/100`);
+  console.log(
+    `[SEO Analyzer] Done: rules SEO=${seo_audit.score}/100, CRO=${cro_analysis.score}/100` +
+      (pagespeed ? `, real SEO=${pagespeed.seo}, perf=${pagespeed.performance}` : "")
+  );
   return result;
 }
 
