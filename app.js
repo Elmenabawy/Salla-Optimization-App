@@ -420,6 +420,35 @@ async function getMerchantData(req, res, sallaUrl) {
   }
 }
 
+// Debug — show who's logged in (which merchant ID the save uses)
+app.get("/api/whoami", (req, res) => {
+  res.json({
+    isAuthenticated: !!req.user,
+    user: req.user
+      ? {
+          name: req.user.name,
+          email: req.user.email,
+          merchantId: req.user.merchant?.id,
+          merchantName: req.user.merchant?.name,
+        }
+      : null,
+  });
+});
+
+// Debug — list all files in /app/data so we can see what was saved
+app.get("/api/debug-data-dir", (req, res) => {
+  const dir = path.join(__dirname, "data");
+  try {
+    const files = fs.readdirSync(dir).map((name) => {
+      const stat = fs.statSync(path.join(dir, name));
+      return { name, size: stat.size, modifiedAt: stat.mtime };
+    });
+    res.json({ dir, exists: true, files });
+  } catch (err) {
+    res.json({ dir, exists: false, error: err.message });
+  }
+});
+
 // Debug endpoint — shows whether settings file actually exists on disk
 app.get("/api/debug-settings/:merchantId", (req, res) => {
   const mid = req.params.merchantId;
