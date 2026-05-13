@@ -1426,20 +1426,54 @@
   }
 
   // ---- Live Order Ticker ----
+  function buildRandomOrderMessage(opts) {
+    var names = (opts.names || []).filter(Boolean);
+    var cities = (opts.cities || []).filter(Boolean);
+    if (!names.length || !cities.length) return null;
+    var name = names[Math.floor(Math.random() * names.length)];
+    var city = cities[Math.floor(Math.random() * cities.length)];
+    var min = Math.max(1, parseInt(opts.minMinutesAgo, 10) || 1);
+    var max = Math.max(min, parseInt(opts.maxMinutesAgo, 10) || 45);
+    var minutes = Math.floor(Math.random() * (max - min + 1)) + min;
+    // Arabic-aware minute formatting: 1 → دقيقة, 2 → دقيقتين, 3-10 → دقائق, 11+ → دقيقة
+    var label;
+    if (minutes === 1) label = "دقيقة";
+    else if (minutes === 2) label = "دقيقتين";
+    else if (minutes >= 3 && minutes <= 10) label = "دقائق";
+    else label = "دقيقة";
+    var timeStr = (minutes === 2 ? "" : minutes + " ") + label;
+    var template = opts.template || "🛍️ {name} من {city} اشترى منذ {time}";
+    return template.replace("{name}", name).replace("{city}", city).replace("{time}", timeStr);
+  }
+
   function renderLiveOrderTicker(opts) {
     if (!opts.enabled) return;
-    var msgs = (opts.messages || []).filter(Boolean);
-    if (!msgs.length) return;
-    var idx = 0;
+    var staticMsgs = (opts.messages || []).filter(Boolean);
+    var staticIdx = 0;
+
+    function nextMessage() {
+      if (opts.randomMode) {
+        var msg = buildRandomOrderMessage(opts);
+        if (msg) return msg;
+      }
+      if (staticMsgs.length) {
+        var m = staticMsgs[staticIdx];
+        staticIdx = (staticIdx + 1) % staticMsgs.length;
+        return m;
+      }
+      return null;
+    }
+
     function tick() {
+      var msg = nextMessage();
+      if (!msg) return;
       var t = document.createElement("div");
       t.className = "alfa-toast " + (opts.position === "bottom-right" ? "r" : "l");
       t.style.background = opts.bgColor || "#FFFFFF";
       t.style.color = opts.textColor || "#0f172a";
-      t.innerHTML = '<span style="font-size:22px">🛍️</span><span>' + msgs[idx] + "</span>";
+      t.innerHTML = "<span>" + msg + "</span>";
       document.body.appendChild(t);
       setTimeout(function () { t.style.transition = "opacity .4s,transform .4s"; t.style.opacity = "0"; t.style.transform = "translateY(20px)"; setTimeout(function () { t.remove(); }, 400); }, (opts.showEvery || 12000) - 1500);
-      idx = (idx + 1) % msgs.length;
     }
     setTimeout(tick, 4000);
     setInterval(tick, opts.showEvery || 12000);

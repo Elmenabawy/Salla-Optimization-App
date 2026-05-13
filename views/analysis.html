@@ -601,8 +601,32 @@
       </div>
       <label class="f-switch"><input type="checkbox" id="f-lo-enabled"><span class="f-slider"></span></label>
     </div>
-    <div class="grid md:grid-cols-2 gap-3">
-      <div class="md:col-span-2"><label class="f-label">الرسائل (سطر لكل واحدة)</label><textarea id="f-lo-messages" class="f-input" rows="5" style="resize:vertical;font-family:inherit"></textarea></div>
+
+    <div class="flex gap-2 mb-3 p-1 rounded-lg" style="background:rgba(15,23,42,.5)">
+      <label class="flex-1 cursor-pointer">
+        <input type="radio" name="f-lo-mode" id="f-lo-mode-random" class="sr-only peer" checked>
+        <div class="px-3 py-2 text-center text-sm font-bold rounded-md peer-checked:bg-teal-600 peer-checked:text-white text-slate-400">🎲 وضع تلقائي (مقترح)</div>
+      </label>
+      <label class="flex-1 cursor-pointer">
+        <input type="radio" name="f-lo-mode" id="f-lo-mode-static" class="sr-only peer">
+        <div class="px-3 py-2 text-center text-sm font-bold rounded-md peer-checked:bg-teal-600 peer-checked:text-white text-slate-400">✏️ رسائل ثابتة</div>
+      </label>
+    </div>
+
+    <div id="f-lo-random-fields" class="grid md:grid-cols-2 gap-3">
+      <div class="md:col-span-2"><label class="f-label">أسماء العملاء (سطر لكل اسم)</label><textarea id="f-lo-names" class="f-input" rows="4" style="resize:vertical;font-family:inherit" placeholder="أحمد&#10;سارة"></textarea></div>
+      <div class="md:col-span-2"><label class="f-label">المدن (سطر لكل مدينة)</label><textarea id="f-lo-cities" class="f-input" rows="3" style="resize:vertical;font-family:inherit" placeholder="الرياض&#10;جدة"></textarea></div>
+      <div class="md:col-span-2"><label class="f-label">قالب الرسالة ({name}, {city}, {time})</label><input id="f-lo-template" type="text" class="f-input"></div>
+      <div><label class="f-label">أقل وقت (دقائق)</label><input id="f-lo-min" type="number" min="1" class="f-input"></div>
+      <div><label class="f-label">أقصى وقت (دقائق)</label><input id="f-lo-max" type="number" min="1" class="f-input"></div>
+    </div>
+
+    <div id="f-lo-static-fields" style="display:none">
+      <label class="f-label">الرسائل (سطر لكل واحدة)</label>
+      <textarea id="f-lo-messages" class="f-input" rows="5" style="resize:vertical;font-family:inherit"></textarea>
+    </div>
+
+    <div class="grid md:grid-cols-2 gap-3 mt-3 pt-3" style="border-top:1px solid rgba(148,163,184,0.2)">
       <div><label class="f-label">الموقع</label><select id="f-lo-position" class="f-input"><option value="bottom-left">يسار الأسفل</option><option value="bottom-right">يمين الأسفل</option></select></div>
       <div><label class="f-label">المدة بين الإشعارات (ms)</label><input id="f-lo-every" type="number" min="5000" step="1000" class="f-input"></div>
       <div><label class="f-label">لون الخلفية</label><input id="f-lo-bg" type="color" class="f-input" style="height:38px;padding:2px"></div>
@@ -831,6 +855,18 @@ function showTab(e, name) {
   if (name === 'leads') loadMyLeads();
 }
 
+function toggleLoModeF(random) {
+  var r = document.getElementById('f-lo-random-fields');
+  var s = document.getElementById('f-lo-static-fields');
+  if (r) r.style.display = random ? '' : 'none';
+  if (s) s.style.display = random ? 'none' : '';
+}
+document.addEventListener('change', function (e) {
+  if (e.target && (e.target.id === 'f-lo-mode-random' || e.target.id === 'f-lo-mode-static')) {
+    toggleLoModeF(document.getElementById('f-lo-mode-random').checked);
+  }
+});
+
 var _myLeadsLoaded = false;
 function loadMyLeads(force) {
   if (_myLeadsLoaded && !force) return;
@@ -983,6 +1019,15 @@ function loadMyLeads(force) {
     }
     if (s.liveOrderTicker) {
       $('f-lo-enabled').checked = !!s.liveOrderTicker.enabled;
+      var random = s.liveOrderTicker.randomMode !== false;
+      $('f-lo-mode-random').checked = random;
+      $('f-lo-mode-static').checked = !random;
+      toggleLoModeF(random);
+      $('f-lo-names').value = (s.liveOrderTicker.names || []).join('\n');
+      $('f-lo-cities').value = (s.liveOrderTicker.cities || []).join('\n');
+      $('f-lo-template').value = s.liveOrderTicker.template || '🛍️ {name} من {city} اشترى منذ {time}';
+      $('f-lo-min').value = s.liveOrderTicker.minMinutesAgo || 1;
+      $('f-lo-max').value = s.liveOrderTicker.maxMinutesAgo || 45;
       $('f-lo-messages').value = (s.liveOrderTicker.messages || []).join('\n');
       $('f-lo-position').value = s.liveOrderTicker.position || 'bottom-left';
       $('f-lo-every').value = s.liveOrderTicker.showEvery || 12000;
@@ -1141,6 +1186,12 @@ function loadMyLeads(force) {
       },
       liveOrderTicker: {
         enabled: $('f-lo-enabled').checked,
+        randomMode: $('f-lo-mode-random').checked,
+        names: $('f-lo-names').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
+        cities: $('f-lo-cities').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
+        template: $('f-lo-template').value.trim() || '🛍️ {name} من {city} اشترى منذ {time}',
+        minMinutesAgo: parseInt($('f-lo-min').value, 10) || 1,
+        maxMinutesAgo: parseInt($('f-lo-max').value, 10) || 45,
         messages: $('f-lo-messages').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
         position: $('f-lo-position').value,
         showEvery: parseInt($('f-lo-every').value, 10) || 12000,
