@@ -450,6 +450,15 @@ app.get("/api/debug-analysis/:merchantId", (req, res) => {
       pagespeed: raw.pagespeed,
       seoScore: raw.analysis?.seo_audit?.score,
       croScore: raw.analysis?.cro_analysis?.score,
+      // Specific failing checks
+      seoIssues: {
+        technical: raw.analysis?.seo_audit?.technical_issues || [],
+        onPage: raw.analysis?.seo_audit?.on_page_problems || [],
+      },
+      croIssues: {
+        ux: raw.analysis?.cro_analysis?.ux_issues || [],
+        trust: raw.analysis?.cro_analysis?.trust_issues || [],
+      },
     });
   } catch (e) {
     res.json({ exists: true, error: e.message });
