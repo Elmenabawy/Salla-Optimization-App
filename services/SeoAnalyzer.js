@@ -446,11 +446,12 @@ function getStoreUrl(storeData) {
   return null;
 }
 
-async function analyzeStore(merchantId, SallaAPI, accessToken) {
+async function analyzeStore(merchantId, SallaAPI, accessToken, manualStoreUrl) {
   console.log(`[SEO Analyzer] Analyzing store for merchant ${merchantId}...`);
 
   const storeData = await fetchStoreData(SallaAPI, accessToken);
-  const storeUrl = getStoreUrl(storeData);
+  // Prefer merchant-provided URL from settings (more reliable than API guesswork)
+  const storeUrl = manualStoreUrl || getStoreUrl(storeData);
 
   // Run rule-based analysis + real PageSpeed audit in parallel
   const [pagespeed] = await Promise.all([fetchPageSpeed(storeUrl)]);

@@ -72,7 +72,7 @@ async function persistMerchantAndAnalyze(merchantId, data) {
   }
 
   // Kick off the analysis in the background
-  analyzeStore(merchantId, SallaAPI, accessToken).catch(err => {
+  analyzeStore(merchantId, SallaAPI, accessToken, loadSettings(merchantId)?.seoFixer?.storeUrl).catch(err => {
     console.error("[Webhook] Analysis failed:", err.message);
   });
 }
@@ -139,7 +139,7 @@ SallaAPI.onAuth(async (accessToken, refreshToken, expires_in, data) => {
 
   // Trigger SEO/CRO analysis in background (non-blocking)
   if (merchantId && accessToken) {
-    analyzeStore(merchantId, SallaAPI, accessToken).catch(err => {
+    analyzeStore(merchantId, SallaAPI, accessToken, loadSettings(merchantId)?.seoFixer?.storeUrl).catch(err => {
       console.error("[OAuth] Analysis failed:", err.message);
     });
   }
@@ -538,7 +538,7 @@ app.get("/embed/refresh", async function (req, res) {
     const accessToken = await getAccessTokenForMerchant(merchantId);
     if (accessToken) {
       try {
-        await analyzeStore(merchantId, SallaAPI, accessToken);
+        await analyzeStore(merchantId, SallaAPI, accessToken, loadSettings(merchantId)?.seoFixer?.storeUrl);
       } catch (err) {
         console.error("[/embed/refresh] failed:", err.message);
       }
@@ -566,7 +566,7 @@ app.get("/embed", async function (req, res) {
     const accessToken = await getAccessTokenForMerchant(merchantId);
     if (accessToken) {
       try {
-        result = await analyzeStore(merchantId, SallaAPI, accessToken);
+        result = await analyzeStore(merchantId, SallaAPI, accessToken, loadSettings(merchantId)?.seoFixer?.storeUrl);
         isReal = true;
       } catch (err) {
         console.error("[Embed] Analysis failed for merchant", merchantId, err.message);
@@ -619,7 +619,7 @@ app.get("/analysis", ensureAuthenticated, async function (req, res) {
     const accessToken = await getAccessTokenForMerchant(merchantId) || SallaAPI.getToken();
     if (accessToken) {
       try {
-        saved = await analyzeStore(merchantId, SallaAPI, accessToken);
+        saved = await analyzeStore(merchantId, SallaAPI, accessToken, loadSettings(merchantId)?.seoFixer?.storeUrl);
       } catch (err) {
         console.error("[/analysis] Inline analyze failed:", err.message);
       }
@@ -724,7 +724,7 @@ app.get("/analysis/refresh", ensureAuthenticated, async function (req, res) {
   }
 
   try {
-    await analyzeStore(merchantId, SallaAPI, accessToken);
+    await analyzeStore(merchantId, SallaAPI, accessToken, loadSettings(merchantId)?.seoFixer?.storeUrl);
   } catch (err) {
     console.error("[/analysis/refresh] failed:", err.message);
   }

@@ -149,6 +149,7 @@ const DEFAULTS = {
     imageAltFallback: true,
     storeName: "",
     storeLogo: "",
+    storeUrl: "",
     organizationSameAs: [],
   },
   liveOrderTicker: {

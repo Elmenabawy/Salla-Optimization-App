@@ -654,6 +654,7 @@
       </label>
     </div>
     <div class="grid md:grid-cols-2 gap-3 mt-4 pt-4 border-t border-slate-700">
+      <div class="md:col-span-2"><label class="f-label">🌐 رابط متجرك (مطلوب لتحليل سرعة جوجل)</label><input id="f-seo-store-url" type="url" class="f-input" placeholder="https://yourstore.salla.sa"><p class="text-xs text-slate-400 mt-1">أدخل الرابط الكامل لمتجرك للحصول على Google PageSpeed</p></div>
       <div><label class="f-label">اسم المتجر</label><input id="f-seo-store-name" type="text" class="f-input" placeholder="اسمك التجاري"></div>
       <div><label class="f-label">رابط لوجو المتجر</label><input id="f-seo-store-logo" type="url" class="f-input" placeholder="https://..."></div>
       <div class="md:col-span-2"><label class="f-label">روابط السوشيال (سطر لكل واحد)</label><textarea id="f-seo-same-as" class="f-input" rows="3" style="resize:vertical;font-family:inherit" placeholder="https://instagram.com/yourstore"></textarea></div>
@@ -998,6 +999,7 @@ function loadMyLeads(force) {
       $('f-seo-canonical').checked = s.seoFixer.canonical !== false;
       $('f-seo-meta').checked = s.seoFixer.metaDescription !== false;
       $('f-seo-alt').checked = s.seoFixer.imageAltFallback !== false;
+      $('f-seo-store-url').value = s.seoFixer.storeUrl || '';
       $('f-seo-store-name').value = s.seoFixer.storeName || '';
       $('f-seo-store-logo').value = s.seoFixer.storeLogo || '';
       $('f-seo-same-as').value = (s.seoFixer.organizationSameAs || []).join('\n');
@@ -1155,6 +1157,7 @@ function loadMyLeads(force) {
         canonical: $('f-seo-canonical').checked,
         metaDescription: $('f-seo-meta').checked,
         imageAltFallback: $('f-seo-alt').checked,
+        storeUrl: $('f-seo-store-url').value.trim(),
         storeName: $('f-seo-store-name').value.trim(),
         storeLogo: $('f-seo-store-logo').value.trim(),
         organizationSameAs: $('f-seo-same-as').value.split('\n').map(function (s) { return s.trim(); }).filter(Boolean),
