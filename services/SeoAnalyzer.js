@@ -426,10 +426,24 @@ function buildAISuggestions(storeData) {
 
 function getStoreUrl(storeData) {
   const info = storeData.storeInfo?.data || storeData.storeInfo || {};
-  return info.domain ||
-    info.url ||
-    (info.username ? `https://${info.username}.salla.sa` : null) ||
-    (info.subdomain ? `https://${info.subdomain}.salla.sa` : null);
+  const candidates = [
+    info.domain,
+    info.url,
+    info.public_url,
+    info.store_url,
+    info.website,
+    info.full_url,
+    info.subdomain && `https://${info.subdomain}.salla.sa`,
+    info.username && `https://${info.username}.salla.sa`,
+  ].filter(Boolean);
+  for (const c of candidates) {
+    if (typeof c !== "string") continue;
+    const cleaned = c.trim();
+    if (!cleaned) continue;
+    return cleaned.startsWith("http") ? cleaned : `https://${cleaned}`;
+  }
+  console.warn("[SEO Analyzer] No store URL found in:", Object.keys(info));
+  return null;
 }
 
 async function analyzeStore(merchantId, SallaAPI, accessToken) {

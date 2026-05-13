@@ -435,6 +435,27 @@ app.get("/api/whoami", (req, res) => {
   });
 });
 
+// Debug — show full analysis JSON (helps diagnose PageSpeed integration)
+app.get("/api/debug-analysis/:merchantId", (req, res) => {
+  const mid = req.params.merchantId;
+  const filePath = path.join(__dirname, "data", `analysis_${mid}.json`);
+  if (!fs.existsSync(filePath)) return res.json({ exists: false });
+  try {
+    const raw = JSON.parse(fs.readFileSync(filePath, "utf8"));
+    res.json({
+      exists: true,
+      analyzedAt: raw.analyzedAt,
+      storeUrl: raw.storeUrl || null,
+      hasPagespeed: !!raw.pagespeed,
+      pagespeed: raw.pagespeed,
+      seoScore: raw.analysis?.seo_audit?.score,
+      croScore: raw.analysis?.cro_analysis?.score,
+    });
+  } catch (e) {
+    res.json({ exists: true, error: e.message });
+  }
+});
+
 // Debug — list all files in /app/data so we can see what was saved
 app.get("/api/debug-data-dir", (req, res) => {
   const dir = path.join(__dirname, "data");
