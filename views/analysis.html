@@ -60,12 +60,53 @@
     <p class="text-slate-400 mt-2">آخر تحليل: {{ analyzedAt }} · {{ productsAnalyzed }} منتج</p>
   </div>
   {% if not isDemo %}
-  <a href="/analysis/refresh" class="grad-bg text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition shadow-glow inline-flex items-center gap-2">
-    <span>🔄</span>
-    <span>تحديث التحليل</span>
-  </a>
+  <div class="flex flex-wrap gap-2">
+    <a href="/analysis/refresh" class="grad-bg text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition shadow-glow inline-flex items-center gap-2">
+      <span>🔄</span>
+      <span>تحديث التحليل</span>
+    </a>
+    <button onclick="autoFixSEO()" class="text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition shadow-glow inline-flex items-center gap-2" style="background:linear-gradient(135deg,#a855f7 0%,#ec4899 100%);box-shadow:0 0 30px -5px rgba(168,85,247,.4)">
+      <span>🤖</span>
+      <span>إصلاح تلقائي (تجريبي)</span>
+    </button>
+  </div>
   {% endif %}
 </div>
+
+<script>
+async function autoFixSEO() {
+  if (!confirm('سيقوم هذا الزر بتحديث عناوين ووصف منتجاتك في سلة لرفع نقاط SEO. هل تريد المتابعة؟\n\n(للاختبار فقط - يمكنك تعديل المنتجات يدوياً لاحقاً)')) return;
+  var btn = event.currentTarget;
+  var originalText = btn.innerHTML;
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span><span>جاري الإصلاح... قد يستغرق دقيقة</span>';
+  try {
+    var r = await fetch('/api/auto-fix-seo', { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+    var data = await r.json();
+    if (data.ok) {
+      var s = data.stats;
+      var msg = '✅ تم الإصلاح بنجاح!\n\n' +
+        '📊 المنتجات المفحوصة: ' + s.scanned + '\n' +
+        '📝 عناوين تم إصلاحها: ' + s.titlesFixed + '\n' +
+        '📄 أوصاف تم إصلاحها: ' + s.descriptionsFixed + '\n' +
+        '🏷️ Meta Description: ' + s.metaDescriptionsFixed + '\n' +
+        '🔖 SKU: ' + s.skusFixed + '\n' +
+        (s.failures.length ? '\n⚠️ فشل: ' + s.failures.length : '') +
+        '\n\nسيتم تحديث التحليل تلقائياً...';
+      alert(msg);
+      window.location.href = '/analysis/refresh';
+    } else {
+      alert('❌ خطأ: ' + (data.error || 'فشلت العملية'));
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    }
+  } catch (e) {
+    alert('❌ خطأ في الاتصال: ' + e.message);
+    btn.disabled = false;
+    btn.innerHTML = originalText;
+  }
+}
+</script>
 
 <!-- Scores -->
 <div class="grid md:grid-cols-2 gap-6 mb-10">

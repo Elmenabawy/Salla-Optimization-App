@@ -16,6 +16,7 @@ const { analyzeStore, loadAnalysis } = require("./services/SeoAnalyzer");
 const DemoData = require("./services/DemoData");
 const { loadSettings, saveSettings } = require("./services/MerchantSettings");
 const { loadLeads, addLead, toCSV } = require("./services/Leads");
+const { autoFixProducts } = require("./services/AutoFixer");
 const port = process.argv[2] || 8082;
 
 /*
@@ -721,6 +722,29 @@ app.get("/api/my-leads/export", ensureAuthenticated, (req, res) => {
 app.get("/api/my-merchant-categories", ensureAuthenticated, (req, res) =>
   getMyMerchantData(req, res, "https://api.salla.dev/admin/v2/categories?per_page=100")
 );
+
+// POST /api/auto-fix-seo
+// Test/dev tool — pads short titles/descriptions, adds missing meta + SKU
+// on all merchant products via the Salla API so the rule-based SEO score
+// climbs. Useful for verifying what the score actually measures.
+app.post("/api/auto-fix-seo", ensureAuthenticated, async function (req, res) {
+  const merchantId = req.user?.merchant?.id;
+  if (!merchantId) return res.status(401).json({ error: "no merchant" });
+  const accessToken = await getAccessTokenForMerchant(merchantId);
+  if (!accessToken) return res.status(400).json({ error: "no access token saved — reinstall the app" });
+  try {
+    const stats = await autoFixProducts(accessToken);
+    // Invalidate cached analysis so the next /analysis re-runs against the updated products
+    try {
+      const cachePath = path.join(__dirname, "data", `analysis_${merchantId}.json`);
+      if (fs.existsSync(cachePath)) fs.unlinkSync(cachePath);
+    } catch (e) {}
+    res.json({ ok: true, stats });
+  } catch (err) {
+    console.error("[auto-fix-seo] failed:", err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // GET /analysis/refresh
 // Re-run the analysis synchronously, then redirect back to /analysis
