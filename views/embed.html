@@ -39,15 +39,15 @@
   <script>
     tailwind.config = { theme: { extend: {
       fontFamily: { sans: ['Cairo', 'system-ui', 'sans-serif'] },
-      colors: { brand: { 400:'#5eead4', 500:'#2dd4bf', 600:'#0d9488' } },
-      boxShadow: { glow: '0 0 30px -5px rgba(45,212,191,0.4)' }
+      colors: { brand: { 400:'#5d6df1', 500:'#1C35EA', 600:'#1428c9' } },
+      boxShadow: { glow: '0 0 30px -5px rgba(28,53,234,0.4)' }
     }}}
   </script>
   <style>
     body { font-family: 'Cairo', sans-serif; background: #f8fafc; min-height: 100vh; color: #0f172a; }
     .card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-    .grad-bg { background: linear-gradient(135deg,#0d9488 0%,#2563eb 100%); }
-    .grad-text { background: linear-gradient(135deg,#0d9488 0%,#2563eb 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .grad-bg { background: linear-gradient(135deg,#1C35EA 0%,#5d6df1 100%); }
+    .grad-text { background: linear-gradient(135deg,#1C35EA 0%,#5d6df1 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
     .score-ring { display:inline-flex; align-items:center; justify-content:center; width:80px; height:80px; border-radius:50%; font-size:1.6rem; font-weight:900; border:5px solid; }
     .score-good { color:#10b981; border-color:#10b981; }
     .score-mid  { color:#f59e0b; border-color:#f59e0b; }
@@ -58,7 +58,7 @@
     .badge-low    { background:#d1fae5; color:#065f46; }
     .item { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 18px; margin-bottom: 10px; }
     .tab-btn { padding: 8px 18px; border-radius: 10px; border: 1px solid #e2e8f0; cursor: pointer; font-size: 0.85rem; font-weight: 700; background: white; color: #64748b; transition: all .2s; font-family: inherit; }
-    .tab-btn.active { background: linear-gradient(135deg,#0d9488 0%,#2563eb 100%); color: white; border-color: transparent; }
+    .tab-btn.active { background: linear-gradient(135deg,#1C35EA 0%,#5d6df1 100%); color: white; border-color: transparent; }
     .tab-content { display: none; }
     .tab-content.active { display: block; animation: fade .25s ease; }
     @keyframes fade { from{opacity:0;} to{opacity:1;} }
@@ -914,12 +914,12 @@
 
 <style>
   .input { width:100%; padding:8px 12px; border:1px solid #e2e8f0; border-radius:8px; font-family:inherit; font-size:14px; transition:all .2s; background:#fff; color:#0f172a; }
-  .input:focus { outline:none; border-color:#0d9488; box-shadow:0 0 0 3px rgba(13,148,136,.1); }
+  .input:focus { outline:none; border-color:#1C35EA; box-shadow:0 0 0 3px rgba(28,53,234,.12); }
   .switch { position:relative; display:inline-block; width:48px; height:26px; flex-shrink:0; }
   .switch input { opacity:0; width:0; height:0; }
   .slider { position:absolute; cursor:pointer; top:0; left:0; right:0; bottom:0; background:#cbd5e0; transition:.3s; border-radius:26px; }
   .slider:before { position:absolute; content:""; height:20px; width:20px; left:3px; bottom:3px; background:#fff; transition:.3s; border-radius:50%; }
-  .switch input:checked + .slider { background:#0d9488; }
+  .switch input:checked + .slider { background:#1C35EA; }
   .switch input:checked + .slider:before { transform:translateX(22px); }
 </style>
 
@@ -976,7 +976,7 @@ function loadLeads(force) {
       };
       tbody.innerHTML = leads.map(function (l) {
         var d = new Date(l.timestamp);
-        return '<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:10px;direction:ltr;text-align:right">' + l.email + '</td><td style="padding:10px">' + (sourceLabels[l.source] || l.source) + '</td><td style="padding:10px;color:#0d9488;font-weight:700">' + (l.prize || '—') + '</td><td style="padding:10px;color:#64748b;font-size:12px">' + d.toLocaleString('ar-SA') + '</td></tr>';
+        return '<tr style="border-bottom:1px solid #f1f5f9"><td style="padding:10px;direction:ltr;text-align:right">' + l.email + '</td><td style="padding:10px">' + (sourceLabels[l.source] || l.source) + '</td><td style="padding:10px;color:#1C35EA;font-weight:700">' + (l.prize || '—') + '</td><td style="padding:10px;color:#64748b;font-size:12px">' + d.toLocaleString('ar-SA') + '</td></tr>';
       }).join('');
       table.style.display = '';
     })

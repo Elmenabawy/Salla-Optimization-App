@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Alfa | تحليل متجرك بذكاء</title>
+  <title>Alfa Plus — Beyond Reach</title>
 
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
@@ -13,10 +13,11 @@
         extend: {
           fontFamily: { sans: ['Cairo', 'system-ui', 'sans-serif'] },
           colors: {
-            brand: { 50:'#ecfdf9', 100:'#d1faf0', 400:'#5eead4', 500:'#2dd4bf', 600:'#0d9488', 700:'#0f766e' },
+            // Brand palette built around #1C35EA (logo primary)
+            brand: { 50:'#eef0fe', 100:'#dde2fd', 200:'#bcc4fa', 300:'#8893f5', 400:'#5d6df1', 500:'#1C35EA', 600:'#1428c9', 700:'#0f1ea0', 800:'#0a1573', 900:'#070e4d' },
             ink:   { 700:'#1e293b', 800:'#0f172a', 900:'#020617' },
           },
-          boxShadow: { glow: '0 0 30px -5px rgba(45,212,191,0.4)' },
+          boxShadow: { glow: '0 0 30px -5px rgba(28,53,234,0.45)' },
           animation: { 'fade-up':'fadeUp 0.5s ease-out', 'fade-in':'fadeIn 0.4s ease-out' },
           keyframes: {
             fadeUp:{'0%':{opacity:0,transform:'translateY(10px)'},'100%':{opacity:1,transform:'translateY(0)'}},
@@ -29,8 +30,8 @@
   <style>
     body { font-family: 'Cairo', sans-serif; background: linear-gradient(180deg, #020617 0%, #0f172a 100%); min-height: 100vh; color: #e2e8f0; }
     .glass { background: rgba(15,23,42,0.6); backdrop-filter: blur(12px); border: 1px solid rgba(148,163,184,0.1); }
-    .grad-text { background: linear-gradient(135deg,#2dd4bf 0%,#60a5fa 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
-    .grad-bg { background: linear-gradient(135deg,#0d9488 0%,#2563eb 100%); }
+    .grad-text { background: linear-gradient(135deg,#5d6df1 0%,#a5b4fc 100%); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .grad-bg { background: linear-gradient(135deg,#1C35EA 0%,#5d6df1 100%); }
     ::-webkit-scrollbar { width: 8px; height: 8px; }
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
@@ -43,10 +44,19 @@
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
     <div class="flex items-center justify-between h-16">
       <a href="/" class="flex items-center gap-3">
-        <div class="w-10 h-10 rounded-xl grad-bg flex items-center justify-center text-white font-black text-lg shadow-glow">A</div>
+        <svg viewBox="0 0 305 246" class="w-10 h-10 drop-shadow-[0_0_12px_rgba(28,53,234,0.5)]" aria-hidden="true" preserveAspectRatio="xMidYMid meet">
+          <g transform="translate(0,246) scale(0.1,-0.1)" fill-rule="evenodd">
+            <path fill="#FFFFFF" d="M2321 2053 c-156 -753 -678 -1310 -1331 -1418 -124 -21 -422 -16 -530 8 -36 8 -67 13 -69 11 -10 -9 154 -163 227 -211 376 -251 847 -169 1361 236 332 261 664 825 750 1272 41 218 54 204 -180 207 -205 2 -205 2 -228 -105z"></path>
+            <path fill="#FFFFFF" d="M1260 1786 c0 -51 -3 -113 -6 -137 -6 -44 -6 -44 77 -44 46 0 107 -4 136 -8 52 -9 52 -9 72 60 11 37 26 103 34 146 15 77 15 77 -149 77 -164 0 -164 0 -164 -94z"></path>
+            <path fill="#FFFFFF" d="M493 1533 c-144 -191 -210 -421 -184 -639 6 -51 14 -99 17 -108 11 -28 163 -67 323 -82 70 -6 74 -5 67 12 -57 147 -46 360 26 511 17 38 32 73 31 79 0 15 -211 294 -221 294 -5 0 -31 -30 -59 -67z"></path>
+            <path fill="#1C35EA" d="M1755 2008 c-41 -187 -79 -319 -130 -449 -5 -13 8 -25 52 -50 32 -18 91 -66 130 -105 72 -73 72 -73 101 -36 106 135 199 326 247 511 44 163 59 151 -185 151 -209 0 -210 0 -215 -22z"></path>
+            <path fill="#1C35EA" d="M1040 1875 c-72 -15 -116 -30 -203 -68 -66 -30 -187 -107 -187 -120 0 -8 144 -213 188 -266 19 -25 19 -25 73 23 30 26 93 66 141 89 87 42 87 42 88 132 0 125 -11 225 -24 224 -6 0 -40 -7 -76 -14z"></path>
+            <path fill="#1C35EA" d="M2327 901 c-32 -43 -92 -111 -133 -151 -60 -58 -73 -77 -68 -94 3 -11 31 -99 61 -193 55 -173 55 -173 272 -173 120 0 220 3 223 6 20 19 -68 296 -139 439 -45 89 -142 245 -153 245 -3 0 -31 -36 -63 -79z"></path>
+          </g>
+        </svg>
         <div>
-          <div class="text-white font-bold text-lg leading-tight">Alfa</div>
-          <div class="text-xs text-slate-400 leading-tight">تحليل متجرك بذكاء</div>
+          <div class="text-white font-black text-lg leading-tight tracking-tight">Alfa <span class="text-brand-400">Plus</span></div>
+          <div class="text-[10px] uppercase tracking-[0.2em] text-slate-400 leading-tight font-bold">Beyond Reach</div>
         </div>
       </a>
 
@@ -70,8 +80,7 @@
 <footer class="border-t border-slate-800 mt-20 py-8">
   <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
     <p class="text-sm text-slate-500">
-      صُنع لمتاجر سلة •
-      <a href="https://salla.dev" class="text-brand-400 hover:text-brand-500 transition">Salla Developers</a>
+      <span class="font-bold text-slate-300">Alfa <span class="text-brand-400">Plus</span></span> · Beyond Reach · صُنع لمتاجر سلة
     </p>
   </div>
 </footer>
