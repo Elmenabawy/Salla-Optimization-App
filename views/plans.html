@@ -1,0 +1,69 @@
+{% extends 'layout.html' %}
+{% block content %}
+
+<section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
+
+  <div class="text-center mb-12 animate-fade-up">
+    <h1 class="text-4xl md:text-5xl font-black text-white mb-4">
+      اختر <span class="grad-text">الباقة</span> المناسبة لمتجرك
+    </h1>
+    <p class="text-lg text-slate-400 max-w-2xl mx-auto">
+      ابدأ مجاناً وقم بالترقية في أي وقت — كل الباقات تشمل تحليل SEO/CRO الأساسي وزر واتساب.
+    </p>
+  </div>
+
+  <div class="grid md:grid-cols-3 gap-6 mb-12">
+    {% for p in plans %}
+    <div class="glass rounded-2xl p-8 relative {% if p.id == 'pro' %}border-2 border-brand-500 shadow-glow{% endif %} animate-fade-up">
+
+      {% if p.id == 'pro' %}
+      <div class="absolute -top-3 right-6 grad-bg text-white text-xs font-black px-3 py-1 rounded-full uppercase tracking-wider">الأكثر شعبية</div>
+      {% endif %}
+
+      <div class="mb-6">
+        <div class="text-sm font-bold text-brand-400 uppercase tracking-widest mb-2">{{ p.name }}</div>
+        <h3 class="text-2xl font-black text-white mb-1">{{ p.nameAr }}</h3>
+        <div class="flex items-baseline gap-1">
+          {% if p.priceMonthly == 0 %}
+            <span class="text-4xl font-black text-white">مجاناً</span>
+          {% else %}
+            <span class="text-4xl font-black text-white">{{ p.priceMonthly }}</span>
+            <span class="text-slate-400 text-sm">ر.س / شهرياً</span>
+          {% endif %}
+        </div>
+      </div>
+
+      <ul class="space-y-3 mb-8">
+        {% for f in p.features %}
+        <li class="flex items-start gap-3 text-slate-300 text-sm">
+          <span class="text-brand-400 mt-0.5">✓</span>
+          <span>{{ f }}</span>
+        </li>
+        {% endfor %}
+      </ul>
+
+      {% if currentPlan == p.id %}
+        <button disabled class="w-full py-3 rounded-lg bg-slate-800 text-slate-400 font-bold text-sm cursor-not-allowed">
+          الباقة الحالية
+        </button>
+      {% elif p.priceMonthly == 0 %}
+        <a href="/login" class="block text-center w-full py-3 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-bold text-sm transition">
+          ابدأ مجاناً
+        </a>
+      {% else %}
+        <a href="/login" class="block text-center w-full py-3 rounded-lg grad-bg text-white font-bold text-sm hover:opacity-90 transition">
+          ترقية الآن
+        </a>
+      {% endif %}
+
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="glass rounded-2xl p-6 text-center text-sm text-slate-400">
+    <p>الدفع والاشتراك يتمان من خلال <a href="https://salla.dev/" class="text-brand-400 font-bold hover:underline">سلة</a> — يمكنك الإلغاء في أي وقت من لوحة التحكم.</p>
+  </div>
+
+</section>
+
+{% endblock %}

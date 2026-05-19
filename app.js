@@ -17,6 +17,8 @@ const DemoData = require("./services/DemoData");
 const { loadSettings, saveSettings } = require("./services/MerchantSettings");
 const { loadLeads, addLead, toCSV } = require("./services/Leads");
 const { autoFixProducts } = require("./services/AutoFixer");
+const { planAllows, filterSettingsByPlan, CATALOG } = require("./services/Plans");
+const { getMerchantPlan, invalidatePlanCache } = require("./services/SallaSubscription");
 const port = process.argv[2] || 8082;
 
 /*
@@ -361,11 +363,18 @@ app.use("/api/lead", (req, res, next) => {
   next();
 });
 
-app.post("/api/lead", (req, res) => {
+app.post("/api/lead", async (req, res) => {
   const storeId = req.body?.store || req.query.store;
   const email = req.body?.email;
   if (!storeId || !email) return res.status(400).json({ error: "store and email required" });
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) return res.status(400).json({ error: "invalid email" });
+  // Lead capture is a Pro+ feature — silently drop for free-tier so storefront
+  // widgets stay simple (no per-feature error UI required).
+  const accessToken = await getAccessTokenForMerchant(storeId);
+  const { plan } = await getMerchantPlan(storeId, accessToken);
+  if (!planAllows(plan, "leadCapture")) {
+    return res.status(402).json({ error: "lead capture requires Pro plan", plan });
+  }
   const saved = addLead(storeId, {
     email,
     source: req.body?.source || "unknown",
@@ -375,7 +384,7 @@ app.post("/api/lead", (req, res) => {
   res.json({ ok: true, lead: saved });
 });
 
-app.get("/api/widget-config", (req, res) => {
+app.get("/api/widget-config", async (req, res) => {
   const storeId = req.query.store;
   // Demo preview used by the marketing landing page
   if (storeId === "demo") {
@@ -397,7 +406,14 @@ app.get("/api/widget-config", (req, res) => {
     });
   }
   if (!storeId) return res.json({});
-  res.json(loadSettings(storeId));
+
+  // Plan gating — disable any widget the merchant's plan doesn't include
+  // before the storefront widget.js sees it. Free-tier merchants can still
+  // toggle paid widgets in the dashboard, but they won't render in production.
+  const accessToken = await getAccessTokenForMerchant(storeId);
+  const { plan } = await getMerchantPlan(storeId, accessToken);
+  const settings = loadSettings(storeId);
+  res.json(filterSettingsByPlan(settings, plan));
 });
 
 // ============================================================
@@ -420,6 +436,41 @@ async function getMerchantData(req, res, sallaUrl) {
     res.json({ data: [] });
   }
 }
+
+// Plan info — used by the dashboard to show current tier + upgrade prompts.
+// Iframe-token authenticated.
+app.get("/api/plan", async (req, res) => {
+  const merchantId = authIframeRequest(req, res);
+  if (!merchantId) return;
+  const accessToken = await getAccessTokenForMerchant(merchantId);
+  const info = await getMerchantPlan(merchantId, accessToken);
+  res.json({ ...info, catalog: CATALOG });
+});
+
+// Session-authenticated counterpart for the main /analysis page.
+app.get("/api/my-plan", ensureAuthenticated, async (req, res) => {
+  const merchantId = req.user?.merchant?.id;
+  if (!merchantId) return res.status(401).json({ error: "no merchant" });
+  const accessToken = await getAccessTokenForMerchant(merchantId);
+  const info = await getMerchantPlan(merchantId, accessToken);
+  res.json({ ...info, catalog: CATALOG });
+});
+
+// Force a re-fetch from Salla (call this after a known plan change, e.g. webhook)
+app.post("/api/plan/refresh", ensureAuthenticated, (req, res) => {
+  invalidatePlanCache(req.user?.merchant?.id);
+  res.json({ ok: true });
+});
+
+// /plans — public pricing/comparison page. Renders the CATALOG so updates
+// to plan definitions automatically flow to the UI.
+app.get("/plans", (req, res) => {
+  res.render("plans.html", {
+    isLogin: !!req.user,
+    plans: CATALOG,
+    currentPlan: null,
+  });
+});
 
 // Debug — show who's logged in (which merchant ID the save uses)
 app.get("/api/whoami", (req, res) => {
@@ -590,6 +641,11 @@ app.get("/embed", async function (req, res) {
   const data = result || DemoData;
   const refreshQs = new URLSearchParams(req.query).toString();
   const settings = merchantId ? loadSettings(merchantId) : null;
+  let planInfo = { plan: "free", source: "default" };
+  if (merchantId) {
+    const accessToken = await getAccessTokenForMerchant(merchantId);
+    planInfo = await getMerchantPlan(merchantId, accessToken);
+  }
   res.render("embed.html", {
     analysis: data.analysis,
     pagespeed: data.pagespeed || null,
@@ -601,6 +657,9 @@ app.get("/embed", async function (req, res) {
     refreshQs: refreshQs,
     settings: settings,
     iframeToken: req.query.token || "",
+    plan: planInfo.plan,
+    planInfo: planInfo,
+    plansCatalog: CATALOG,
   });
 });
 
@@ -637,6 +696,11 @@ app.get("/analysis", ensureAuthenticated, async function (req, res) {
   }
 
   const settings = merchantId ? loadSettings(merchantId) : null;
+  let planInfo = { plan: "free", source: "default" };
+  if (merchantId) {
+    const accessToken = await getAccessTokenForMerchant(merchantId) || SallaAPI.getToken();
+    planInfo = await getMerchantPlan(merchantId, accessToken);
+  }
 
   res.render("analysis.html", {
     isLogin: req.user,
@@ -647,6 +711,9 @@ app.get("/analysis", ensureAuthenticated, async function (req, res) {
     pending: false,
     settings: settings,
     merchantId: merchantId || null,
+    plan: planInfo.plan,
+    planInfo: planInfo,
+    plansCatalog: CATALOG,
   });
 });
 
@@ -694,9 +761,14 @@ app.get("/api/leads", (req, res) => {
   res.json({ leads: loadLeads(merchantId) });
 });
 
-app.get("/api/leads/export", (req, res) => {
+app.get("/api/leads/export", async (req, res) => {
   const merchantId = authIframeRequest(req, res);
   if (!merchantId) return;
+  const accessToken = await getAccessTokenForMerchant(merchantId);
+  const { plan } = await getMerchantPlan(merchantId, accessToken);
+  if (!planAllows(plan, "leadsExport")) {
+    return res.status(402).json({ error: "CSV export requires Business plan", plan, upgradeRequired: "business" });
+  }
   const csv = toCSV(loadLeads(merchantId));
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", `attachment; filename=leads_${merchantId}.csv`);
@@ -710,9 +782,14 @@ app.get("/api/my-leads", ensureAuthenticated, (req, res) => {
   res.json({ leads: loadLeads(merchantId) });
 });
 
-app.get("/api/my-leads/export", ensureAuthenticated, (req, res) => {
+app.get("/api/my-leads/export", ensureAuthenticated, async (req, res) => {
   const merchantId = req.user?.merchant?.id;
   if (!merchantId) return res.status(401).send("Unauthorized");
+  const accessToken = await getAccessTokenForMerchant(merchantId);
+  const { plan } = await getMerchantPlan(merchantId, accessToken);
+  if (!planAllows(plan, "leadsExport")) {
+    return res.status(402).json({ error: "CSV export requires Business plan", plan, upgradeRequired: "business" });
+  }
   const csv = toCSV(loadLeads(merchantId));
   res.setHeader("Content-Type", "text/csv; charset=utf-8");
   res.setHeader("Content-Disposition", `attachment; filename=leads_${merchantId}.csv`);
@@ -732,6 +809,10 @@ app.post("/api/auto-fix-seo", ensureAuthenticated, async function (req, res) {
   if (!merchantId) return res.status(401).json({ error: "no merchant" });
   const accessToken = await getAccessTokenForMerchant(merchantId);
   if (!accessToken) return res.status(400).json({ error: "no access token saved — reinstall the app" });
+  const { plan } = await getMerchantPlan(merchantId, accessToken);
+  if (!planAllows(plan, "autoFixProducts")) {
+    return res.status(402).json({ error: "auto-fix requires Business plan", plan, upgradeRequired: "business" });
+  }
   try {
     const stats = await autoFixProducts(accessToken);
     // Invalidate cached analysis so the next /analysis re-runs against the updated products
