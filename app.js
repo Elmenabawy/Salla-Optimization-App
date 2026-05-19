@@ -148,6 +148,46 @@ SallaAPI.onAuth(async (accessToken, refreshToken, expires_in, data) => {
   }
 });
 
+// Global SEO Meta Middleware
+app.use((req, res, next) => {
+  const baseUrl =
+    process.env.APP_URL ||
+    `${req.protocol}://${req.get("host")}`;
+
+  const isEmbed =
+    req.path.startsWith("/embed") ||
+    req.path.startsWith("/api");
+
+  res.locals.meta = {
+    title: "Alfa Plus | CRO & SEO Optimization for Salla Stores",
+    description:
+      "Boost conversions and improve search rankings for your Salla store with Alfa Plus. Advanced CRO and SEO tools designed for Salla merchants.",
+    keywords:
+      "Salla SEO, Salla CRO, Alfa Plus, ecommerce SEO, conversion optimization, Salla app",
+    canonical: baseUrl + req.originalUrl,
+    robots: isEmbed
+      ? "noindex,nofollow,noarchive"
+      : "index,follow",
+
+    og: {
+      title: "Alfa Plus | CRO & SEO Optimization for Salla Stores",
+      description:
+        "Advanced SEO and CRO optimization tools for Salla stores.",
+      type: "website",
+      url: baseUrl + req.originalUrl,
+    },
+
+    twitter: {
+      card: "summary_large_image",
+      title: "Alfa Plus | CRO & SEO Optimization for Salla Stores",
+      description:
+        "Improve rankings and conversions for your Salla store with Alfa Plus.",
+    },
+  };
+
+  next();
+});
+
 //   Passport session setup.
 //   To support persistent login sessions, Passport needs to be able to
 //   serialize users into and deserialize users out of the session. Typically,
