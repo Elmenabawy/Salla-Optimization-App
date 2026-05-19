@@ -36,6 +36,32 @@
     ::-webkit-scrollbar-track { background: #0f172a; }
     ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #475569; }
+
+    /* Feature lock — used to blur paid features for lower-tier merchants
+       and overlay an "Upgrade" CTA. Wrap the target element with
+       .feat-lock and add .feat-lock-target to the original content. */
+    .feat-lock { position: relative; display: inline-block; }
+    .feat-lock-block { position: relative; display: block; }
+    .feat-lock-target { filter: blur(3px); pointer-events: none; user-select: none; opacity: 0.55; }
+    .feat-lock-overlay {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: rgba(2,6,23,0.35); border-radius: inherit; z-index: 10; padding: 12px;
+    }
+    .feat-lock-card {
+      background: rgba(15,23,42,0.96); border: 1px solid rgba(28,53,234,0.4);
+      border-radius: 16px; padding: 18px 22px; text-align: center; max-width: 360px;
+      box-shadow: 0 0 40px -5px rgba(28,53,234,0.5);
+    }
+    .feat-lock-card-sm { padding: 10px 14px; border-radius: 12px; max-width: 280px; }
+    .feat-lock-icon { font-size: 1.5rem; margin-bottom: 4px; }
+    .feat-lock-title { color: #fff; font-weight: 900; font-size: 0.95rem; margin-bottom: 2px; }
+    .feat-lock-sub { color: #94a3b8; font-size: 0.75rem; margin-bottom: 8px; }
+    .feat-lock-btn {
+      display: inline-block; background: linear-gradient(135deg,#1C35EA 0%,#5d6df1 100%);
+      color: #fff !important; padding: 8px 18px; border-radius: 10px; font-weight: 800;
+      font-size: 0.8rem; text-decoration: none; transition: opacity 0.2s; white-space: nowrap;
+    }
+    .feat-lock-btn:hover { opacity: 0.9; }
   </style>
 </head>
 <body class="antialiased">

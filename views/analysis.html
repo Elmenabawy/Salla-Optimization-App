@@ -65,10 +65,29 @@
       <span>🔄</span>
       <span>تحديث التحليل</span>
     </a>
+    {% if plan == 'business' %}
     <button onclick="autoFixSEO()" class="text-white px-6 py-3 rounded-xl font-bold hover:opacity-90 transition shadow-glow inline-flex items-center gap-2" style="background:linear-gradient(135deg,#a855f7 0%,#ec4899 100%);box-shadow:0 0 30px -5px rgba(168,85,247,.4)">
       <span>🤖</span>
       <span>إصلاح تلقائي (تجريبي)</span>
     </button>
+    {% else %}
+    <div class="feat-lock">
+      <div class="feat-lock-target">
+        <button class="text-white px-6 py-3 rounded-xl font-bold inline-flex items-center gap-2" style="background:linear-gradient(135deg,#a855f7 0%,#ec4899 100%)">
+          <span>🤖</span>
+          <span>إصلاح تلقائي (تجريبي)</span>
+        </button>
+      </div>
+      <div class="feat-lock-overlay">
+        <div class="feat-lock-card feat-lock-card-sm">
+          <div class="feat-lock-icon">🔒</div>
+          <div class="feat-lock-title">باقة Business</div>
+          <div class="feat-lock-sub">الإصلاح التلقائي للمنتجات</div>
+          <a href="/plans" class="feat-lock-btn">⬆ ترقية</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
   </div>
   {% endif %}
 </div>
@@ -857,7 +876,23 @@ async function autoFixSEO() {
       </div>
       <div class="flex gap-2">
         <button onclick="loadMyLeads(true)" class="grad-bg text-white px-4 py-2 rounded-lg text-sm font-bold">🔄 تحديث</button>
+        {% if plan == 'business' %}
         <a href="/api/my-leads/export" class="grad-bg text-white px-4 py-2 rounded-lg text-sm font-bold no-underline">📥 تصدير CSV</a>
+        {% else %}
+        <div class="feat-lock">
+          <div class="feat-lock-target">
+            <a class="grad-bg text-white px-4 py-2 rounded-lg text-sm font-bold no-underline inline-block">📥 تصدير CSV</a>
+          </div>
+          <div class="feat-lock-overlay">
+            <div class="feat-lock-card feat-lock-card-sm">
+              <div class="feat-lock-icon">🔒</div>
+              <div class="feat-lock-title">باقة Business</div>
+              <div class="feat-lock-sub">تصدير CSV للعملاء</div>
+              <a href="/plans" class="feat-lock-btn">⬆ ترقية</a>
+            </div>
+          </div>
+        </div>
+        {% endif %}
       </div>
     </div>
     <div id="ml-loading" class="text-center py-8 text-slate-400">⏳ جاري التحميل...</div>

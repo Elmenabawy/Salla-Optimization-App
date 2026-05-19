@@ -62,6 +62,28 @@
     .tab-content { display: none; }
     .tab-content.active { display: block; animation: fade .25s ease; }
     @keyframes fade { from{opacity:0;} to{opacity:1;} }
+
+    /* Feature lock — light theme variant for the iframe */
+    .feat-lock { position: relative; display: inline-block; }
+    .feat-lock-target { filter: blur(3px); pointer-events: none; user-select: none; opacity: 0.5; }
+    .feat-lock-overlay {
+      position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+      background: rgba(15,23,42,0.05); border-radius: inherit; z-index: 10; padding: 4px;
+    }
+    .feat-lock-card {
+      background: #fff; border: 1px solid rgba(28,53,234,0.3);
+      border-radius: 12px; padding: 10px 14px; text-align: center; max-width: 260px;
+      box-shadow: 0 8px 24px -8px rgba(28,53,234,0.35);
+    }
+    .feat-lock-icon { font-size: 1.25rem; line-height: 1; margin-bottom: 2px; }
+    .feat-lock-title { color: #0f172a; font-weight: 900; font-size: 0.85rem; }
+    .feat-lock-sub { color: #64748b; font-size: 0.7rem; margin-bottom: 6px; }
+    .feat-lock-btn {
+      display: inline-block; background: linear-gradient(135deg,#1C35EA 0%,#5d6df1 100%);
+      color: #fff !important; padding: 6px 14px; border-radius: 8px; font-weight: 800;
+      font-size: 0.75rem; text-decoration: none; transition: opacity 0.2s; white-space: nowrap;
+    }
+    .feat-lock-btn:hover { opacity: 0.9; }
   </style>
 </head>
 <body class="antialiased">
@@ -882,7 +904,23 @@
         </div>
         <div class="flex gap-2">
           <button id="leads-refresh" class="grad-bg text-white px-4 py-2 rounded-lg text-sm font-bold">🔄 تحديث</button>
+          {% if plan == 'business' %}
           <a id="leads-export" class="grad-bg text-white px-4 py-2 rounded-lg text-sm font-bold no-underline">📥 تصدير CSV</a>
+          {% else %}
+          <div class="feat-lock">
+            <div class="feat-lock-target">
+              <a class="grad-bg text-white px-4 py-2 rounded-lg text-sm font-bold no-underline inline-block">📥 تصدير CSV</a>
+            </div>
+            <div class="feat-lock-overlay">
+              <div class="feat-lock-card feat-lock-card-sm">
+                <div class="feat-lock-icon">🔒</div>
+                <div class="feat-lock-title">باقة Business</div>
+                <div class="feat-lock-sub">تصدير CSV للعملاء</div>
+                <a href="/plans" target="_top" class="feat-lock-btn">⬆ ترقية</a>
+              </div>
+            </div>
+          </div>
+          {% endif %}
         </div>
       </div>
       <div id="leads-loading" class="text-center py-8 text-slate-400">⏳ جاري التحميل...</div>
