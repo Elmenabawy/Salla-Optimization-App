@@ -186,6 +186,10 @@ const DEFAULTS = {
     textColor: "#0f172a",
     accentColor: "#0d9488",
   },
+  hotjar: {
+    enabled: false,
+    siteId: "",
+  },
 };
 
 function file(merchantId) {
@@ -215,6 +219,7 @@ function mergeAll(raw) {
     liveOrderTicker: { ...DEFAULTS.liveOrderTicker, ...(raw.liveOrderTicker || {}) },
     seoFixer: { ...DEFAULTS.seoFixer, ...(raw.seoFixer || {}) },
     customPopup: { ...DEFAULTS.customPopup, ...(raw.customPopup || {}) },
+    hotjar: { ...DEFAULTS.hotjar, ...(raw.hotjar || {}) },
   };
 }
 

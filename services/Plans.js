@@ -41,6 +41,7 @@ const FEATURES = {
 
   autoFixProducts:    { minPlan: BUSINESS, settingsKey: null },
   leadsExport:        { minPlan: BUSINESS, settingsKey: null },
+  hotjarTracking:     { minPlan: BUSINESS, settingsKey: "hotjar" },
 };
 
 function rank(plan) {
@@ -105,6 +106,7 @@ const CATALOG = [
       "كل مزايا الباقة الاحترافية",
       "إصلاح SEO تلقائي لكل المنتجات (Auto-fix)",
       "تصدير العملاء المحتملين CSV",
+      "تحليلات Hotjar المتقدمة",
       "أولوية الدعم الفني",
     ],
   },

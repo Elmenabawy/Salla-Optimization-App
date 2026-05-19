@@ -156,6 +156,18 @@
     else { el.style.left = "50%"; el.style.transform = "translateX(-50%)"; }
   }
 
+  function renderHotjar(opts) {
+    if (!opts.enabled || !opts.siteId) return;
+    (function(h,o,t,j,a,r){
+      h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+      h._hjSettings={hjid:opts.siteId,hjsv:6};
+      a=o.getElementsByTagName('head')[0];
+      r=o.createElement('script');r.async=1;
+      r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+      a.appendChild(r);
+    })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+  }
+
   function renderWhatsApp(opts) {
     if (!opts.enabled) return;
     if (!opts.number) {
@@ -1483,6 +1495,8 @@
     fetchConfig(function (cfg) {
       if (!cfg) return;
       injectStyles();
+      // Hotjar injection early so it tracks all page interactions
+      try { renderHotjar(cfg.hotjar || {}); } catch (e) {}
       // Performance boost runs FIRST so it tags existing images before they load
       try { applyPerformanceBoost(cfg.performanceBoost || {}); } catch (e) {}
       try { renderSeoFixer(cfg.seoFixer || {}); } catch (e) {}

@@ -34,6 +34,21 @@
       sallaPost('embedded::ready', {});
     });
   </script>
+
+  <!-- Hotjar Tracking Code for analytics (Business plan only) -->
+  {% if settings.hotjar.enabled and settings.hotjar.siteId %}
+  <script>
+    (function(h,o,t,j,a,r){
+      h.hj=h.hj||function(){(h.hj.q=h.hj.q||[]).push(arguments)};
+      h._hjSettings={hjid:{{ settings.hotjar.siteId }},hjsv:6};
+      a=o.getElementsByTagName('head')[0];
+      r=o.createElement('script');r.async=1;
+      r.src=t+h._hjSettings.hjid+j+h._hjSettings.hjsv;
+      a.appendChild(r);
+    })(window,document,'https://static.hotjar.com/c/hotjar-','.js?sv=');
+  </script>
+  {% endif %}
+
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
@@ -157,6 +172,7 @@
     <button class="tab-btn" onclick="t(event,'ai')">🤖 الاقتراحات</button>
     <button class="tab-btn" onclick="t(event,'features')">⚙️ ميزات المتجر</button>
     <button class="tab-btn" onclick="t(event,'leads')">📧 العملاء المحتملين</button>
+    {% if plan == 'business' %}<button class="tab-btn" onclick="t(event,'hotjar')">📊 Hotjar</button>{% endif %}
   </div>
 
   <!-- SEO -->
@@ -881,6 +897,50 @@
       </div>
     </div>
 
+    <!-- HOTJAR ANALYTICS (Business plan only) -->
+    {% if plan == 'business' %}
+    <div class="card p-5">
+      <div class="flex items-start justify-between gap-4 mb-4">
+        <div>
+          <h3 class="font-black text-lg mb-1">📊 Hotjar تحليلات</h3>
+          <p class="text-sm text-slate-500">تتبع سلوك الزوار مع خرائط الحرارة وتسجيل الجلسات والتحليلات المتقدمة</p>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="hj-enabled">
+          <span class="slider"></span>
+        </label>
+      </div>
+      <div class="grid md:grid-cols-2 gap-3">
+        <div class="md:col-span-2">
+          <label class="text-xs font-semibold text-slate-600 mb-1 block">معرّف موقع Hotjar (Site ID)</label>
+          <input id="hj-site-id" type="text" placeholder="e.g., 1234567" class="input">
+          <p class="text-xs text-slate-400 mt-1">اعثر على معرّف موقعك في إعدادات Hotjar → Code Snippet</p>
+        </div>
+      </div>
+    </div>
+    {% else %}
+    <div class="feat-lock-block">
+      <div class="feat-lock-target">
+        <div class="card p-5">
+          <div class="flex items-start justify-between gap-4 mb-4">
+            <div>
+              <h3 class="font-black text-lg mb-1">📊 Hotjar تحليلات</h3>
+              <p class="text-sm text-slate-500">تتبع سلوك الزوار مع خرائط الحرارة وتسجيل الجلسات والتحليلات المتقدمة</p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="feat-lock-overlay">
+        <div class="feat-lock-card">
+          <div class="feat-lock-icon">🔒</div>
+          <div class="feat-lock-title">باقة Business</div>
+          <div class="feat-lock-sub">تحليلات Hotjar متقدمة</div>
+          <a href="/plans" target="_top" class="feat-lock-btn">⬆ ترقية</a>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+
     <div id="save-status" class="text-sm text-slate-500 text-center"></div>
     <button id="save-settings" class="grad-bg text-white w-full py-3 rounded-xl font-bold shadow-glow">💾 حفظ الإعدادات</button>
 
@@ -946,6 +1006,41 @@
       </div>
     </div>
   </div>
+
+  <!-- HOTJAR TAB (Business plan only) -->
+  {% if plan == 'business' %}
+  <div id="tab-hotjar" class="tab-content">
+    <div class="card p-5">
+      {% if settings.hotjar.enabled and settings.hotjar.siteId %}
+      <div class="mb-4">
+        <h3 class="font-black text-lg mb-2">📊 Hotjar Analytics</h3>
+        <p class="text-sm text-slate-600 mb-4">اعرض تحليلات متقدمة عن سلوك زوار متجرك</p>
+        <div class="space-y-3">
+          <a href="https://app.hotjar.com/site/{{ settings.hotjar.siteId }}" target="_blank" class="block">
+            <button class="grad-bg text-white w-full py-3 rounded-lg font-bold">🔗 فتح لوحة تحكم Hotjar</button>
+          </a>
+          <a href="https://app.hotjar.com/site/{{ settings.hotjar.siteId }}/heatmaps" target="_blank" class="block">
+            <button class="w-full py-2 rounded-lg font-semibold border border-brand-500 text-brand-600 hover:bg-brand-50">🔥 خرائط الحرارة</button>
+          </a>
+          <a href="https://app.hotjar.com/site/{{ settings.hotjar.siteId }}/session-recordings" target="_blank" class="block">
+            <button class="w-full py-2 rounded-lg font-semibold border border-brand-500 text-brand-600 hover:bg-brand-50">🎬 تسجيلات الجلسات</button>
+          </a>
+          <a href="https://app.hotjar.com/site/{{ settings.hotjar.siteId }}/funnels" target="_blank" class="block">
+            <button class="w-full py-2 rounded-lg font-semibold border border-brand-500 text-brand-600 hover:bg-brand-50">📉 المسارات (Funnels)</button>
+          </a>
+        </div>
+      </div>
+      {% else %}
+      <div class="text-center py-8">
+        <div class="text-4xl mb-3">📊</div>
+        <h3 class="font-bold text-lg mb-2">لم تُعيّن Hotjar بعد</h3>
+        <p class="text-sm text-slate-600 mb-4">اذهب إلى تبويب «ميزات المتجر» وأدخل معرّف موقع Hotjar الخاص بك لبدء التتبع</p>
+        <button onclick="t(event,'features')" class="grad-bg text-white px-6 py-2 rounded-lg font-bold text-sm">⚙️ إعدادات Hotjar</button>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
 
   {% endif %}
 </div>
@@ -1195,6 +1290,10 @@ function loadLeads(force) {
       $('cp-text-color').value = s.customPopup.textColor || '#0f172a';
       $('cp-accent').value = s.customPopup.accentColor || '#0d9488';
       onTargetingChange(s.customPopup.targeting || 'all', s.customPopup.targetIds || '');
+    }
+    if (s.hotjar) {
+      $('hj-enabled').checked = !!s.hotjar.enabled;
+      $('hj-site-id').value = s.hotjar.siteId || '';
     }
   }
 
@@ -1452,6 +1551,10 @@ function loadLeads(force) {
           bgColor: $('cp-bg').value,
           textColor: $('cp-text-color').value,
           accentColor: $('cp-accent').value,
+        },
+        hotjar: {
+          enabled: $('hj-enabled').checked,
+          siteId: $('hj-site-id').value.trim(),
         },
       };
       fetch('/api/settings?token=' + encodeURIComponent(token), {

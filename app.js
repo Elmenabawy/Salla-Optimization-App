@@ -21,8 +21,11 @@ const { planAllows, filterSettingsByPlan, CATALOG } = require("./services/Plans"
 const { getMerchantPlan, invalidatePlanCache } = require("./services/SallaSubscription");
 const port = process.argv[2] || 8082;
 
+// Initialize Express app first (before using middleware)
+var app = express();
+
 /*
-  Create a .env file in the root directory of your project. 
+  Create a .env file in the root directory of your project.
   Add environment-specific variables on new lines in the form of NAME=VALUE. For example:
   SALLA_OAUTH_CLIENT_ID=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
   SALLA_OAUTH_CLIENT_SECRET=xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
@@ -207,8 +210,6 @@ passport.deserializeUser(function (obj, done) {
 //   Use the Salla Strategy within Passport.
 passport.use(SallaAPI.getPassportStrategy());
 // save token and user data to your selected database
-
-var app = express();
 
 // configure Express
 app.set("views", __dirname + "/views");
