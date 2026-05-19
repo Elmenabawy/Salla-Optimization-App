@@ -6,15 +6,32 @@
 //
 // Plan resolution order:
 //   1. .env override (DEV_FORCE_PLAN) — for local testing
-//   2. In-memory cache (TTL 5 min) — avoid hammering Salla on every request
-//   3. Salla API call — GET /admin/v2/subscriptions
-//   4. Fallback: "free"
+//   2. Grandfathered allowlist (GRANDFATHERED_PRO_MERCHANTS / GRANDFATHERED_BUSINESS_MERCHANTS)
+//      — preserves access for merchants who installed before paid tiers existed
+//   3. In-memory cache (TTL 5 min) — avoid hammering Salla on every request
+//   4. Salla API call — GET /admin/v2/subscriptions
+//   5. Fallback: "free"
 //
 // Mapping is done by matching the Salla plan name against substrings.
 // Set SALLA_PRO_PLAN_NAMES / SALLA_BUSINESS_PLAN_NAMES in .env to control
 // which Salla product names map to which tier (comma-separated).
 
 const { FREE, PRO, BUSINESS } = require("./Plans");
+
+function merchantIdsFromEnv(envKey) {
+  return (process.env[envKey] || "")
+    .split(",")
+    .map(s => String(s).trim())
+    .filter(Boolean);
+}
+
+function grandfatheredPlan(merchantId) {
+  if (!merchantId) return null;
+  const mid = String(merchantId);
+  if (merchantIdsFromEnv("GRANDFATHERED_BUSINESS_MERCHANTS").includes(mid)) return BUSINESS;
+  if (merchantIdsFromEnv("GRANDFATHERED_PRO_MERCHANTS").includes(mid)) return PRO;
+  return null;
+}
 
 const CACHE_TTL_MS = 5 * 60 * 1000;
 const cache = new Map(); // merchantId -> { plan, expiresAt }
@@ -68,6 +85,12 @@ async function getMerchantPlan(merchantId, accessToken) {
   }
 
   if (!merchantId) return { plan: FREE, source: "no-merchant" };
+
+  // Grandfathered — merchants who installed before paid tiers existed keep
+  // their access. Checked before the cache so toggling the env var takes
+  // effect on next request.
+  const grandfathered = grandfatheredPlan(merchantId);
+  if (grandfathered) return { plan: grandfathered, source: "grandfathered" };
 
   // Cache hit
   const cached = cache.get(merchantId);
