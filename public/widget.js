@@ -1425,13 +1425,32 @@
         panel.querySelector("button").addEventListener("click", function () { panel.classList.remove("open"); });
       }
       var list = getWishlist();
-      panel.querySelector("#alfa-wish-list").innerHTML = list.length
-        ? list.map(function (p) {
-            return '<a class="alfa-wish-item" href="' + p.url + '">' +
-              (p.image ? '<img src="' + p.image + '">' : "") +
-              '<div style="flex:1"><div style="font-weight:600;font-size:13px">' + p.name + "</div></div></a>";
+      var container = panel.querySelector("#alfa-wish-list");
+      container.innerHTML = list.length
+        ? list.map(function (p, idx) {
+            return '<div class="alfa-wish-item-wrapper" style="position:relative;display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid #e2e8f0">' +
+              '<a class="alfa-wish-item" href="' + p.url + '" style="flex:1;display:flex;align-items:center;gap:8px;text-decoration:none;color:inherit">' +
+              (p.image ? '<img src="' + p.image + '" style="width:50px;height:50px;object-fit:cover;border-radius:8px">' : "") +
+              '<div style="flex:1;min-width:0"><div style="font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">' + p.name + "</div></div>" +
+              '</a>' +
+              '<button data-idx="' + idx + '" class="alfa-wish-remove" style="background:none;border:none;cursor:pointer;font-size:18px;padding:4px;flex-shrink:0">×</button>' +
+              '</div>';
           }).join("")
         : '<div style="text-align:center;padding:40px;color:#94a3b8">قائمتك فارغة</div>';
+
+      // Add remove button listeners
+      container.querySelectorAll('.alfa-wish-remove').forEach(function (btn) {
+        btn.addEventListener('click', function (e) {
+          e.preventDefault();
+          e.stopPropagation();
+          var idx = parseInt(btn.getAttribute('data-idx'), 10);
+          var current = getWishlist();
+          current.splice(idx, 1);
+          setWishlist(current);
+          updateCount();
+          openWishPanel(); // Refresh the panel
+        });
+      });
       panel.classList.add("open");
     }
     updateCount();
