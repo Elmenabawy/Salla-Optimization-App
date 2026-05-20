@@ -25,6 +25,38 @@ function loadAnalysis(merchantId) {
 // Google PageSpeed Insights — real Core Web Vitals + SEO audit
 // Free API, no key required (optional key for higher quota)
 // ============================================================
+// Retries 429/5xx with exponential backoff. PageSpeed rate-limits hard
+// when called without an API key (shared per-IP quota), so a transient
+// 429 shouldn't fail the whole analysis. Honors Retry-After when present.
+async function fetchWithRetry(apiUrl, attempts = 3) {
+  let lastErr;
+  for (let i = 0; i < attempts; i++) {
+    const ctrl = new AbortController();
+    const timeout = setTimeout(() => ctrl.abort(), 30000);
+    try {
+      const res = await fetch(apiUrl, { signal: ctrl.signal });
+      clearTimeout(timeout);
+      if (res.ok) return res.json();
+      if (res.status !== 429 && res.status < 500) {
+        throw new Error(`PageSpeed API ${res.status}`);
+      }
+      lastErr = new Error(`PageSpeed API ${res.status}`);
+      if (i < attempts - 1) {
+        const retryAfter = parseInt(res.headers.get("retry-after"), 10);
+        const wait = Number.isFinite(retryAfter) ? retryAfter * 1000 : 1000 * 2 ** i;
+        console.warn(`[PageSpeed] ${res.status} — retrying in ${wait}ms (${i + 1}/${attempts})`);
+        await new Promise((r) => setTimeout(r, wait));
+      }
+    } catch (err) {
+      clearTimeout(timeout);
+      lastErr = err;
+      if (err.name === "AbortError" || i === attempts - 1) break;
+      await new Promise((r) => setTimeout(r, 1000 * 2 ** i));
+    }
+  }
+  throw lastErr;
+}
+
 async function fetchPageSpeed(storeUrl) {
   if (!storeUrl) return null;
   const params = new URLSearchParams({
@@ -37,12 +69,7 @@ async function fetchPageSpeed(storeUrl) {
   const apiUrl = `https://www.googleapis.com/pagespeedonline/v5/runPagespeed?${params}`;
   try {
     console.log(`[PageSpeed] Auditing ${storeUrl} ...`);
-    const ctrl = new AbortController();
-    const timeout = setTimeout(() => ctrl.abort(), 30000);
-    const res = await fetch(apiUrl, { signal: ctrl.signal });
-    clearTimeout(timeout);
-    if (!res.ok) throw new Error(`PageSpeed API ${res.status}`);
-    const data = await res.json();
+    const data = await fetchWithRetry(apiUrl);
     const lh = data.lighthouseResult || {};
     const cats = lh.categories || {};
     const audits = lh.audits || {};

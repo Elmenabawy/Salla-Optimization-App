@@ -76,7 +76,7 @@
     s.innerHTML =
       ".alfa-wa{position:fixed;width:60px;height:60px;border-radius:50%;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(0,0,0,.18);z-index:99999;cursor:pointer;text-decoration:none;transition:transform .2s ease}" +
       ".alfa-wa:hover{transform:scale(1.08)}" +
-      ".alfa-bar{position:relative;width:100%;text-align:center;padding:10px;font-family:system-ui,sans-serif;font-weight:700;font-size:14px;z-index:99998;box-shadow:0 2px 8px rgba(0,0,0,.1)}" +
+      ".alfa-bar{position:fixed;top:0;left:0;right:0;width:100%;text-align:center;padding:10px;font-family:system-ui,sans-serif;font-weight:700;font-size:14px;z-index:99998;box-shadow:0 2px 8px rgba(0,0,0,.1)}" +
       ".alfa-cart{position:fixed;padding:12px 24px;border-radius:30px;font-family:system-ui,sans-serif;font-weight:700;text-decoration:none;box-shadow:0 4px 12px rgba(0,0,0,.2);z-index:99997;animation:alfaFade .4s ease;cursor:pointer;user-select:none}" +
       ".alfa-cart:hover{box-shadow:0 6px 16px rgba(0,0,0,.25)}" +
       ".alfa-cart.dragging{opacity:.85;transition:none}" +
@@ -660,16 +660,33 @@
   function applyPerformanceBoost(opts) {
     if (!opts.enabled) return;
 
-    function tagImage(img) {
-      if (opts.lazyLoadImages && !img.hasAttribute("loading")) {
-        // Don't lazy-load images already in the viewport (avoid hurting LCP)
-        var rect = img.getBoundingClientRect();
-        var inView = rect.top < window.innerHeight && rect.bottom > 0;
-        img.setAttribute("loading", inView ? "eager" : "lazy");
+    // Reserve an image's box before it loads so deferring it doesn't shift
+    // the page (CLS). Returns false when no reliable dimensions exist.
+    function reserveSpace(img) {
+      if (img.style.aspectRatio) return true;
+      var w = parseInt(img.getAttribute("width"), 10);
+      var h = parseInt(img.getAttribute("height"), 10);
+      if (w > 0 && h > 0) {
+        img.style.aspectRatio = w + " / " + h;
+        return true;
       }
+      return false;
+    }
+
+    function tagImage(img) {
       if (opts.asyncDecode && !img.hasAttribute("decoding")) {
         img.setAttribute("decoding", "async");
       }
+      if (!opts.lazyLoadImages || img.hasAttribute("loading")) return;
+      // Above the fold (likely LCP) — load eagerly, never defer.
+      var rect = img.getBoundingClientRect();
+      if (rect.top < window.innerHeight && rect.bottom > 0) {
+        img.setAttribute("loading", "eager");
+        return;
+      }
+      // Below the fold — only defer if we can hold its box; lazy-loading an
+      // un-sized image is what *creates* layout shift when it finally loads.
+      if (reserveSpace(img)) img.setAttribute("loading", "lazy");
     }
 
     function tagIframe(f) {
