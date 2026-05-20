@@ -480,35 +480,62 @@ async function analyzeStore(merchantId, SallaAPI, accessToken, manualStoreUrl) {
   // Prefer merchant-provided URL from settings (more reliable than API guesswork)
   const storeUrl = manualStoreUrl || getStoreUrl(storeData);
 
-  // Run rule-based analysis + real PageSpeed audit in parallel
-  const [pagespeed] = await Promise.all([fetchPageSpeed(storeUrl)]);
-
   const seo_audit = analyzeSEO(storeData);
   const cro_analysis = analyzeCRO(storeData);
   const action_plan = buildActionPlan(seo_audit, cro_analysis);
   const ai_suggestions = buildAISuggestions(storeData);
-
-  // Combine our rule-based SEO score with Google's real SEO score (weighted 50/50)
-  if (pagespeed) {
-    seo_audit.realSeoScore = pagespeed.seo;
-    seo_audit.combinedScore = Math.round((seo_audit.score + pagespeed.seo) / 2);
-  }
 
   const result = {
     merchantId,
     analyzedAt: new Date().toISOString(),
     productsAnalyzed: (storeData.products?.data || storeData.products || []).length,
     storeUrl: storeUrl,
-    pagespeed: pagespeed,
+    pagespeed: null,
+    // PageSpeed is a slow external call (Lighthouse, up to 30s + retries), so
+    // we don't block the page on it. The view renders the fast rule-based
+    // analysis immediately and polls /api/pagespeed until this flips to false.
+    pagespeedPending: !!storeUrl,
     analysis: { seo_audit, cro_analysis, action_plan, ai_suggestions },
   };
 
   saveAnalysis(merchantId, result);
   console.log(
     `[SEO Analyzer] Done: rules SEO=${seo_audit.score}/100, CRO=${cro_analysis.score}/100` +
-      (pagespeed ? `, real SEO=${pagespeed.seo}, perf=${pagespeed.performance}` : "")
+      (storeUrl ? " (PageSpeed running in background)" : " (no store URL — PageSpeed skipped)")
   );
+
+  // Fire-and-forget: fetch PageSpeed in the background and patch the saved
+  // analysis when it lands. fetchPageSpeed already swallows its own errors.
+  if (storeUrl) {
+    fetchPageSpeed(storeUrl)
+      .then((pagespeed) => updatePageSpeed(merchantId, pagespeed))
+      .catch((err) => {
+        console.error("[SEO Analyzer] background PageSpeed failed:", err.message);
+        updatePageSpeed(merchantId, null);
+      });
+  }
+
   return result;
+}
+
+// Patches the saved analysis with PageSpeed results once the background audit
+// finishes. Re-loads first so we never clobber a newer analysis.
+function updatePageSpeed(merchantId, pagespeed) {
+  const saved = loadAnalysis(merchantId);
+  if (!saved) return;
+  saved.pagespeed = pagespeed || null;
+  saved.pagespeedPending = false;
+  if (pagespeed && saved.analysis && saved.analysis.seo_audit) {
+    saved.analysis.seo_audit.realSeoScore = pagespeed.seo;
+    saved.analysis.seo_audit.combinedScore = Math.round(
+      (saved.analysis.seo_audit.score + pagespeed.seo) / 2
+    );
+  }
+  saveAnalysis(merchantId, saved);
+  console.log(
+    `[SEO Analyzer] PageSpeed ready for ${merchantId}: ` +
+      (pagespeed ? `perf=${pagespeed.performance}, seo=${pagespeed.seo}` : "unavailable")
+  );
 }
 
 module.exports = { analyzeStore, loadAnalysis };

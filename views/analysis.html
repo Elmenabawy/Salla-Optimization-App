@@ -155,8 +155,9 @@ async function autoFixSEO() {
   </div>
 </div>
 
+<!-- Real Google PageSpeed scores (loaded asynchronously — see poll script below) -->
+<div id="pagespeed-section">
 {% if pagespeed %}
-<!-- Real Google PageSpeed scores -->
 <div class="glass rounded-2xl p-6 mb-6">
   <div class="flex items-center gap-3 mb-4">
     <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-2xl">⚡</div>
@@ -206,6 +207,67 @@ async function autoFixSEO() {
     </div>
   </div>
 </div>
+{% elif pagespeedPending %}
+<div class="glass rounded-2xl p-6 mb-6">
+  <div class="flex items-center gap-3">
+    <div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-2xl animate-pulse">⚡</div>
+    <div>
+      <h2 class="text-xl font-black text-white">Google PageSpeed - جارٍ التحليل…</h2>
+      <p class="text-xs text-slate-400">يقوم Google Lighthouse بفحص متجرك الآن — يظهر التقييم خلال لحظات تلقائياً</p>
+    </div>
+    <div class="ml-auto w-6 h-6 border-2 border-blue-400/30 border-t-blue-400 rounded-full animate-spin"></div>
+  </div>
+</div>
+{% endif %}
+</div>
+
+{% if pagespeedPending %}
+<script>
+(function () {
+  var section = document.getElementById('pagespeed-section');
+  function ring(v) { return v >= 70 ? 'score-good' : v >= 40 ? 'score-mid' : 'score-bad'; }
+  function metric(label, val) {
+    return '<div class="bg-slate-800/50 rounded-lg p-3"><div class="text-xs text-slate-400 mb-1">' +
+      label + '</div><div class="font-bold text-white text-sm">' + (val || '—') + '</div></div>';
+  }
+  function score(val, label) {
+    return '<div class="text-center"><div class="score-ring ' + ring(val) +
+      '" style="width:64px;height:64px;font-size:1.2rem;border-width:4px">' + val +
+      '</div><div class="text-xs text-slate-400 mt-2">' + label + '</div></div>';
+  }
+  function render(ps) {
+    section.innerHTML =
+      '<div class="glass rounded-2xl p-6 mb-6">' +
+        '<div class="flex items-center gap-3 mb-4">' +
+          '<div class="w-10 h-10 rounded-xl bg-blue-500/20 flex items-center justify-center text-2xl">⚡</div>' +
+          '<div><h2 class="text-xl font-black text-white">Google PageSpeed - تقييم حقيقي</h2>' +
+          '<p class="text-xs text-slate-400">تقييم Lighthouse الفعلي من Google لمتجرك</p></div>' +
+        '</div>' +
+        '<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">' +
+          score(ps.performance, '⚡ الأداء') + score(ps.seo, '🔍 SEO') +
+          score(ps.accessibility, '♿ الوصولية') + score(ps.bestPractices, '✅ أفضل الممارسات') +
+        '</div>' +
+        '<div class="grid grid-cols-2 md:grid-cols-5 gap-3 text-center">' +
+          metric('LCP', ps.lcp) + metric('FCP', ps.fcp) + metric('CLS', ps.cls) +
+          metric('TBT', ps.tbt) + metric('TTI', ps.tti) +
+        '</div>' +
+      '</div>';
+  }
+  var tries = 0;
+  function poll() {
+    if (tries++ > 40) return; // ~2 min cap
+    fetch('/api/pagespeed', { headers: { 'Accept': 'application/json' } })
+      .then(function (r) { return r.json(); })
+      .then(function (d) {
+        if (d.pending) { setTimeout(poll, 3000); return; }
+        if (d.pagespeed) render(d.pagespeed);
+        else if (section) section.innerHTML = ''; // failed/unavailable — drop the card
+      })
+      .catch(function () { setTimeout(poll, 5000); });
+  }
+  setTimeout(poll, 2000);
+})();
+</script>
 {% endif %}
 
 <!-- Tabs -->

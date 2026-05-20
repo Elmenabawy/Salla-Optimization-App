@@ -747,6 +747,7 @@ app.get("/analysis", ensureAuthenticated, async function (req, res) {
     isLogin: req.user,
     analysis: saved?.analysis || null,
     pagespeed: saved?.pagespeed || null,
+    pagespeedPending: !!saved?.pagespeedPending,
     analyzedAt: saved?.analyzedAt ? new Date(saved.analyzedAt).toLocaleString('ar-SA') : null,
     productsAnalyzed: saved?.productsAnalyzed || 0,
     pending: false,
@@ -884,6 +885,22 @@ app.get("/analysis/refresh", ensureAuthenticated, async function (req, res) {
     console.error("[/analysis/refresh] failed:", err.message);
   }
   res.redirect("/analysis");
+});
+
+// GET /api/pagespeed
+// Lightweight poll endpoint for the PageSpeed card. The analysis itself
+// renders instantly; the slow Lighthouse audit runs in the background and
+// this reports {pending} until it lands. Works for the session dashboard
+// (req.user) and the Salla iframe (?token=).
+app.get("/api/pagespeed", async function (req, res) {
+  let merchantId = req.user?.merchant?.id;
+  if (!merchantId && req.query.token) {
+    merchantId = decodeSallaToken(req.query.token)?.data?.merchant_id;
+  }
+  if (!merchantId) return res.json({ pending: false, pagespeed: null });
+  const saved = loadAnalysis(merchantId);
+  if (!saved) return res.json({ pending: false, pagespeed: null });
+  res.json({ pending: !!saved.pagespeedPending, pagespeed: saved.pagespeed || null });
 });
 
 // GET /logout
