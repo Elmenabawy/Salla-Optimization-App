@@ -660,17 +660,15 @@
   function applyPerformanceBoost(opts) {
     if (!opts.enabled) return;
 
-    // Reserve an image's box before it loads so deferring it doesn't shift
-    // the page (CLS). Returns false when no reliable dimensions exist.
-    function reserveSpace(img) {
+    // True only when the image's box is already reserved — explicit CSS
+    // aspect-ratio, or width/height attributes (browsers derive aspect-ratio
+    // from them). We never inject our own sizing: overriding the theme's CSS
+    // is what can distort layout and *cause* the shift we're trying to avoid.
+    function hasReservedBox(img) {
       if (img.style.aspectRatio) return true;
       var w = parseInt(img.getAttribute("width"), 10);
       var h = parseInt(img.getAttribute("height"), 10);
-      if (w > 0 && h > 0) {
-        img.style.aspectRatio = w + " / " + h;
-        return true;
-      }
-      return false;
+      return w > 0 && h > 0;
     }
 
     function tagImage(img) {
@@ -684,9 +682,9 @@
         img.setAttribute("loading", "eager");
         return;
       }
-      // Below the fold — only defer if we can hold its box; lazy-loading an
-      // un-sized image is what *creates* layout shift when it finally loads.
-      if (reserveSpace(img)) img.setAttribute("loading", "lazy");
+      // Below the fold — only defer images whose box is already reserved, so
+      // deferring can't shift the page. Leave un-sized images untouched.
+      if (hasReservedBox(img)) img.setAttribute("loading", "lazy");
     }
 
     function tagIframe(f) {
