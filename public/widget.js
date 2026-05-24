@@ -1318,29 +1318,23 @@
 
     // === 2. Inject our own heart icon onto each product card ===
     function addHearts() {
-      // Prefer the real Salla card component. Its inner wrappers
-      // (.s-product-card-content, -entry, -image, …) all contain the substring
-      // "product-card", so a blanket [class*='product-card'] selector would
-      // drop a stray heart *inside* the card body. Target the component when
-      // present; only fall back to class-based detection for non-Salla themes.
-      var cards = document.querySelectorAll("salla-product-card:not([data-alfa-heart])");
-      var isFallback = false;
-      if (!cards.length) {
-        isFallback = true;
-        cards = document.querySelectorAll(
-          ".product-card:not([data-alfa-heart]),[class*='product-card']:not([data-alfa-heart])"
-        );
-      }
+      var sel = "salla-product-card, .product-card, [class*='product-card']";
+      var cards = document.querySelectorAll(
+        "salla-product-card:not([data-alfa-heart])," +
+        ".product-card:not([data-alfa-heart])," +
+        "[class*='product-card']:not([data-alfa-heart])"
+      );
       cards.forEach(function (card) {
         card.setAttribute("data-alfa-heart", "1");
-        // In the class-based fallback, skip inner wrappers nested inside another
-        // matched card so only the outermost card hosts one heart.
-        if (isFallback && card.parentElement && card.parentElement.closest(
-            ".product-card,[class*='product-card']")) {
-          return;
-        }
         var productId = findProductIdInCard(card);
         if (!productId) return;
+        // Salla's inner wrappers (.s-product-card-content, -entry, …) also match
+        // [class*='product-card'] and resolve to the same product as their card.
+        // If an ancestor resolves to the SAME product, let that outer element
+        // host the heart — one heart on the real card, none in the body. We only
+        // skip on a same-product ancestor, so a generic wrapper never drops it.
+        var anc = card.parentElement && card.parentElement.closest(sel);
+        if (anc && findProductIdInCard(anc) === productId) return;
 
         // Make sure card can host an absolute child
         var pos = getComputedStyle(card).position;
