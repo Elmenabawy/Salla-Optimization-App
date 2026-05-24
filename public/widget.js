@@ -131,7 +131,7 @@
       ".alfa-wish-btn:hover{transform:scale(1.08)}" +
       ".alfa-wish-count{position:absolute;top:-4px;right:-4px;background:#fff;color:#ef4444;font-size:11px;font-weight:900;padding:2px 6px;border-radius:9999px;min-width:20px;text-align:center}" +
       ".alfa-wish-heart.alfa-our-heart{color:#cbd5e0;font-size:20px;line-height:1}" +
-      ".alfa-wish-heart.alfa-our-heart.active{color:#ef4444;background:rgba(255,255,255,1)!important;box-shadow:0 4px 12px rgba(239,68,68,.25)!important;animation:alfaHeartPop .3s ease}" +
+      ".alfa-wish-heart.alfa-our-heart.active{color:#ef4444!important;background:rgba(255,255,255,1)!important;box-shadow:0 4px 12px rgba(239,68,68,.25)!important;animation:alfaHeartPop .3s ease}" +
       "@keyframes alfaHeartPop{0%{transform:scale(1)}50%{transform:scale(1.3)}100%{transform:scale(1)}}" +
       ".alfa-wish-panel{position:fixed;top:0;right:0;bottom:0;width:380px;max-width:90vw;background:#fff;color:#0f172a;box-shadow:-8px 0 30px rgba(0,0,0,.18);z-index:99999;transform:translateX(100%);transition:transform .3s;display:flex;flex-direction:column;font-family:system-ui,sans-serif}" +
       ".alfa-wish-panel.open{transform:translateX(0)}" +
@@ -1325,6 +1325,14 @@
       );
       cards.forEach(function (card) {
         card.setAttribute("data-alfa-heart", "1");
+        // Skip nested matches. Salla's inner wrappers (.s-product-card-content,
+        // .s-product-card-entry, …) also match [class*='product-card'], so they
+        // would each get a stray heart *inside* the card body. Only the
+        // outermost card should host one heart.
+        if (card.parentElement && card.parentElement.closest(
+            "salla-product-card, .product-card, [class*='product-card']")) {
+          return;
+        }
         var productId = findProductIdInCard(card);
         if (!productId) return;
 
