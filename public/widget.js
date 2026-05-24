@@ -1318,19 +1318,25 @@
 
     // === 2. Inject our own heart icon onto each product card ===
     function addHearts() {
-      var cards = document.querySelectorAll(
-        "salla-product-card:not([data-alfa-heart])," +
-        ".product-card:not([data-alfa-heart])," +
-        "[class*='product-card']:not([data-alfa-heart])"
-      );
+      // Prefer the real Salla card component. Its inner wrappers
+      // (.s-product-card-content, -entry, -image, …) all contain the substring
+      // "product-card", so a blanket [class*='product-card'] selector would
+      // drop a stray heart *inside* the card body. Target the component when
+      // present; only fall back to class-based detection for non-Salla themes.
+      var cards = document.querySelectorAll("salla-product-card:not([data-alfa-heart])");
+      var isFallback = false;
+      if (!cards.length) {
+        isFallback = true;
+        cards = document.querySelectorAll(
+          ".product-card:not([data-alfa-heart]),[class*='product-card']:not([data-alfa-heart])"
+        );
+      }
       cards.forEach(function (card) {
         card.setAttribute("data-alfa-heart", "1");
-        // Skip nested matches. Salla's inner wrappers (.s-product-card-content,
-        // .s-product-card-entry, …) also match [class*='product-card'], so they
-        // would each get a stray heart *inside* the card body. Only the
-        // outermost card should host one heart.
-        if (card.parentElement && card.parentElement.closest(
-            "salla-product-card, .product-card, [class*='product-card']")) {
+        // In the class-based fallback, skip inner wrappers nested inside another
+        // matched card so only the outermost card hosts one heart.
+        if (isFallback && card.parentElement && card.parentElement.closest(
+            ".product-card,[class*='product-card']")) {
           return;
         }
         var productId = findProductIdInCard(card);
@@ -1437,6 +1443,13 @@
       var c = getWishlist().length;
       if (countEl) { countEl.textContent = c; countEl.style.display = c ? "" : "none"; }
     }
+    // Re-sync every card heart with the current wishlist so removing an item
+    // (from the panel) clears the red state on its product card too.
+    function syncHearts() {
+      document.querySelectorAll(".alfa-our-heart").forEach(function (h) {
+        h.classList.toggle("active", isInWishlist(h.getAttribute("data-product-id")));
+      });
+    }
     function openWishPanel() {
       if (!panel) {
         panel = document.createElement("div");
@@ -1471,6 +1484,7 @@
           current.splice(idx, 1);
           setWishlist(current);
           updateCount();
+          syncHearts(); // clear the red heart on the product card too
           openWishPanel(); // Refresh the panel
         });
       });
